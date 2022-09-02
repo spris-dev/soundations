@@ -1,5 +1,6 @@
 import requests
 import sys
+import time
 
 
 class SpotifyCrawler:
@@ -20,6 +21,13 @@ class SpotifyCrawler:
         return response.json()["access_token"]
 
 
+    # def refresh_access_token(self):
+    #     response = requests.post(self.token_url, data={"grant_type": "refresh_token"}, 
+    #                       auth=(self.client_id, self.client_secret))
+
+    #     return response.json()["access_token"]                  
+
+
     def request(self, url):
         auth = "Bearer " + self.token
         headers = {"Authorization" : auth}
@@ -29,9 +37,14 @@ class SpotifyCrawler:
             print('[Response] status_code: ' + str(response.status_code), file=sys.stdout)
             print('Response headers: ' + str(response.headers), file=sys.stdout)
 
+        if(response.status_code == 401):
+            self.token = self.get_access_token()
+            print('Token refreshed')
+
         if(response.status_code == 429):
             sec_to_sleep = response.headers.get('retry-after')
             print('Retry-after: ' + str(sec_to_sleep))
+            time.sleep(sec_to_sleep)
 
         return response    
 
@@ -44,7 +57,7 @@ class SpotifyCrawler:
         url = "https://api.spotify.com/v1/search?q=year%3A" + year + "&type=" + type + "&limit=" + limit + "&offset="
 
         artist_names = []
-        for i in range(0, 100, int(limit)):
+        for i in range(0, 1000, int(limit)):
             curr_url = url + str(i)
             tracks = self.request(curr_url).json()
             for i, t in enumerate(tracks['artists']['items']):
@@ -69,7 +82,4 @@ class SpotifyCrawler:
         response = self.request(url).json()
 
         return response
-
-
-
-
+        
