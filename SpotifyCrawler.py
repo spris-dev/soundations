@@ -40,6 +40,7 @@ class SpotifyCrawler:
         if(response.status_code == 401):
             self.token = self.get_access_token()
             print('Token refreshed')
+            self.request(url)
 
         if(response.status_code == 429):
             sec_to_sleep = response.headers.get('retry-after')
