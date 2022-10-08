@@ -12,12 +12,14 @@ ctx = Context()
 async def startup():
     ctx.config = Config()
     ctx.sqlite_storage = SqliteStorage(ctx)
+    await ctx.sqlite_storage.connect()
+    await ctx.sqlite_storage.migrate()
 
     app.include_router(create_health_router(ctx), prefix="/api")
 
 @app.on_event("shutdown")
 async def shutdown():
-    ctx.sqlite_storage.connection.close()
+    await ctx.sqlite_storage.disconnect()
 
 @app.get("/")
 async def root():

@@ -1,20 +1,26 @@
-import sqlite3
 from pathlib import Path
+from databases import Database
 
 from context import Context
 
 class SqliteStorage:
-  def __init__(self, ctx: Context) -> None:
-    self.connection = sqlite3.connect(ctx.config.sqlite_db_path)
+  db: Database
 
-    run_migrations(self.connection)
+  def __init__(self, ctx: Context):
+    self.db = Database(f"sqlite+aiosqlite://{ctx.config.sqlite_db_path}")
 
+  async def connect(self) -> None:
+    await self.db.connect()
 
-def run_migrations(con: sqlite3.Connection) -> None:
-  migrations_folder = Path(Path(__file__).parent, '..', 'migrations')
-  migrations = sorted(migrations_folder.iterdir())
+  async def disconnect(self) -> None:
+    await self.db.disconnect()
 
-  with con:
-    for migration in migrations:
-      print(f"Running migration {migration}")
-      con.execute(migration.read_text())
+  async def migrate(self) -> None:
+    migrations_folder = Path(Path(__file__).parent, '..', 'migrations')
+    migrations = sorted(migrations_folder.iterdir())
+
+    async with self.db.transaction():
+      for migration in migrations:
+        print(f"Running migration {migration}")
+
+        await self.db.execute(query=migration.read_text())
