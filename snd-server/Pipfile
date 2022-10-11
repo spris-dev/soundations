@@ -1,0 +1,16 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+fastapi = "*"
+uvicorn = {extras = ["standard"], version = "*"}
+pyright = "*"
+databases = {extras = ["aiosqlite"], version = "*"}
+
+[dev-packages]
+pyright = "*"
+
+[requires]
+python_version = "3.10"
