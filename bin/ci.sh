@@ -4,6 +4,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")"/..
 
-if [ -f .env ]; then
-  export $(grep -v '^#' .env | xargs)
-fi
+pip install poetry
+poetry install
+
+./bin/lint.sh

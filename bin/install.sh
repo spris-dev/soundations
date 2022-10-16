@@ -4,5 +4,4 @@ set -euo pipefail
 
 cd "$(dirname "$0")"/..
 
-mkdir -p .venv
-pipenv install
+poetry install

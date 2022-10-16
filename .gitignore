@@ -1,4 +1,9 @@
+# Project
 .env
 data.sqlite
 
+# Python
 __pycache__
+
+# JavaScript
+node_modules
