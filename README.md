@@ -6,7 +6,8 @@ Sound recommendations project.
 
 ### Requirements
 
-[pipenv](https://pipenv.pypa.io/en/latest/#install-pipenv-today)
+- [nodejs](https://nodejs.org/en/download/) (recommended via [nvm](https://github.com/nvm-sh/nvm#installing-and-updating))
+- [poetry](https://python-poetry.org/docs/#installation)
 
 ### Create local `.env` file
 
@@ -14,10 +15,14 @@ Sound recommendations project.
 cp .env.sample .env
 ```
 
+### Install dependencies
+
+```sh
+./bin/install.sh
+```
+
 ### Start server in development mode
 
 ```sh
-cd snd-server
-./bin/install.sh
-./bin/start.sh
+./bin/start-server.sh
 ```

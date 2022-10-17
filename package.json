@@ -1,0 +1,20 @@
+{
+  "name": "soundations",
+  "version": "1.0.0",
+  "description": "Sound recommendations project.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spris-dev/soundations.git"
+  },
+  "devDependencies": {
+    "husky": "^8.0.0",
+    "lint-staged": "^13.0.3"
+  },
+  "scripts": {
+    "prepare": "husky install",
+    "precommit": "lint-staged"
+  },
+  "lint-staged": {
+    "*.py": "poetry run black"
+  }
+}

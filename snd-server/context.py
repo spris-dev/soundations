@@ -6,5 +6,5 @@ if TYPE_CHECKING:
 
 
 class Context:
-  sqlite_storage: 'SqliteStorage'
-  config: 'Config'
+    sqlite_storage: "SqliteStorage"
+    config: "Config"
