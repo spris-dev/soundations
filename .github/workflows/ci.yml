@@ -1,0 +1,69 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    # Setup docker builder image
+    - name: Docker builder cache
+      id: docker-builder-cache
+      uses: actions/cache@v3
+      with:
+        path: docker-builder-cache
+        key: ${{ runner.os }}-docker-builder-cache-${{ hashFiles('Dockerfile.builder') }}
+
+    - name: Build docker builder image
+      if: steps.docker-builder-cache.outputs.cache-hit != 'true'
+      run: ./bin/build-docker-builder.sh && ./bin/save-docker-builder.sh > docker-builder-cache
+
+    - name: Load docker builder image
+      if: steps.docker-builder-cache.outputs.cache-hit == 'true'
+      run: docker load < docker-builder-cache
+
+
+    # Setup python dependencies
+    - name: Python deps cache
+      id: python-deps-cache
+      uses: actions/cache@v3
+      with:
+        path: python-deps-cache
+        key: ${{ runner.os }}-python-deps-cache-${{ hashFiles('Dockerfile.builder', 'poetry.lock') }}
+
+    - name: Install python deps
+      if: steps.python-deps-cache.outputs.cache-hit != 'true'
+      run: ./bin/docker-run.sh ./bin/install-python-deps.sh && cp -r .venv python-deps-cache
+
+    - name: Load python deps
+      if: steps.python-deps-cache.outputs.cache-hit == 'true'
+      run: cp -r python-deps-cache .venv
+
+
+    # Setup nodejs dependencies
+    - name: Node deps cache
+      id: node-deps-cache
+      uses: actions/cache@v3
+      with:
+        path: node-deps-cache
+        key: ${{ runner.os }}-node-deps-cache-${{ hashFiles('Dockerfile.builder', '**/package-lock.json') }}
+
+    - name: Install node deps
+      if: steps.node-deps-cache.outputs.cache-hit != 'true'
+      run: ./bin/docker-run.sh ./bin/install-node-deps.sh && cp -r node_modules node-deps-cache
+
+    - name: Load node deps
+      if: steps.node-deps-cache.outputs.cache-hit == 'true'
+      run: cp -r node-deps-cache node_modules
+
+
+    # Actual CI actions
+    - name: Lint source code
+      run: ./bin/docker-run.sh ./bin/lint.sh
