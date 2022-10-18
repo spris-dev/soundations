@@ -1,26 +1,69 @@
 name: CI
 
-# Controls when the action will run. Triggers the workflow on push or pull request
-# events but only for the master branch
 on:
   push:
     branches: [ master ]
   pull_request:
     branches: [ master ]
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  ci:
     runs-on: ubuntu-latest
 
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
     - uses: actions/checkout@v2
-    - uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
 
-    - name: Lint & Test
-      run: ./bin/ci.sh
+    # Setup docker builder image
+    - name: Docker builder cache
+      id: docker-builder-cache
+      uses: actions/cache@v3
+      with:
+        path: docker-builder-cache
+        key: ${{ runner.os }}-docker-builder-cache-${{ hashFiles('Dockerfile.builder') }}
+
+    - name: Build docker builder image
+      if: steps.docker-builder-cache.outputs.cache-hit != 'true'
+      run: ./bin/build-docker-builder.sh && ./bin/save-docker-builder.sh > docker-builder-cache
+
+    - name: Load docker builder image
+      if: steps.docker-builder-cache.outputs.cache-hit == 'true'
+      run: docker load < docker-builder-cache
+
+
+    # Setup python dependencies
+    - name: Python deps cache
+      id: python-deps-cache
+      uses: actions/cache@v3
+      with:
+        path: python-deps-cache
+        key: ${{ runner.os }}-python-deps-cache-${{ hashFiles('Dockerfile.builder', 'poetry.lock') }}
+
+    - name: Install python deps
+      if: steps.python-deps-cache.outputs.cache-hit != 'true'
+      run: ./bin/docker-run.sh ./bin/install-python-deps.sh && cp -r .venv python-deps-cache
+
+    - name: Load python deps
+      if: steps.python-deps-cache.outputs.cache-hit == 'true'
+      run: cp -r python-deps-cache .venv
+
+
+    # Setup nodejs dependencies
+    - name: Node deps cache
+      id: node-deps-cache
+      uses: actions/cache@v3
+      with:
+        path: node-deps-cache
+        key: ${{ runner.os }}-node-deps-cache-${{ hashFiles('Dockerfile.builder', '**/package-lock.json') }}
+
+    - name: Install node deps
+      if: steps.node-deps-cache.outputs.cache-hit != 'true'
+      run: ./bin/docker-run.sh ./bin/install-node-deps.sh && cp -r node_modules node-deps-cache
+
+    - name: Load node deps
+      if: steps.node-deps-cache.outputs.cache-hit == 'true'
+      run: cp -r node-deps-cache node_modules
+
+
+    # Actual CI actions
+    - name: Lint source code
+      run: ./bin/docker-run.sh ./bin/lint.sh

@@ -8,7 +8,8 @@
   },
   "devDependencies": {
     "husky": "^8.0.0",
-    "lint-staged": "^13.0.3"
+    "lint-staged": "^13.0.3",
+    "pyright": "^1.1.275"
   },
   "scripts": {
     "prepare": "husky install",

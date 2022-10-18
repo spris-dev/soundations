@@ -7,4 +7,4 @@ cd "$(dirname "$0")"/..
 . ./bin/set-env.sh
 
 poetry run black --check snd-server
-poetry run pyright snd-server
+poetry run npx --yes pyright snd-server
