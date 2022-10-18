@@ -8,4 +8,5 @@ cd "$(dirname "$0")"/..
 
 DOCKER_BUILDKIT=1 docker build \
   -t snd-builder \
+  -f Dockerfile.builder \
   .
