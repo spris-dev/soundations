@@ -64,6 +64,12 @@ jobs:
       run: cp -r node-deps-cache node_modules
 
 
-    # Actual CI actions
     - name: Lint source code
       run: ./bin/docker-run.sh ./bin/lint.sh
+
+    - name: Deploy
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+      run: ./bin/deploy.sh
+      env:
+        SND_MAIN_SERVER_HOST: ${{ secrets.SND_MAIN_SERVER_HOST }}
+        SND_MAIN_SERVER_KEY: ${{ secrets.SND_MAIN_SERVER_KEY }}
