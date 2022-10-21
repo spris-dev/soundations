@@ -8,7 +8,7 @@ class SqliteStorage:
     db: Database
 
     def __init__(self, ctx: Context):
-        self.db = Database(f"sqlite+aiosqlite://{ctx.config.sqlite_db_path}")
+        self.db = Database(f"sqlite+aiosqlite:{ctx.config.sqlite_db_path}")
 
     async def connect(self) -> None:
         await self.db.connect()
