@@ -5,11 +5,12 @@ import pandas as pd
 from operator import itemgetter
 import os
 from dotenv import load_dotenv
+from sounds_storage import SoundsStorage
 
 
 audio_features = [
-    "name",
     "id",
+    "name",
     "popularity",
     "release_date",
     "acousticness",
@@ -30,6 +31,7 @@ audio_features = [
 
 class SpotifyCrawler:
     def __init__(self, client_id, client_secret):
+        self.sounds_storage = SoundsStorage("dataset.csv")
         self.client_id = client_id
         self.client_secret = client_secret
         self.token_url = "https://accounts.spotify.com/api/token"
@@ -70,7 +72,7 @@ class SpotifyCrawler:
         if response.status_code == 429:
             sec_to_sleep = response.headers.get("retry-after")
             print("Retry-after: " + str(sec_to_sleep))
-            time.sleep(sec_to_sleep)
+            time.sleep(float(sec_to_sleep))
             self.request(url)
 
         if response.status_code == 503:
@@ -100,7 +102,7 @@ class SpotifyCrawler:
 
             if tracks is not None:
                 for i, t in enumerate(tracks["artists"]["items"]):
-                    artist_names.append((t["name"], t["id"]))
+                    artist_names.append((t["id"], t["name"]))
 
         return artist_names
 
@@ -127,14 +129,12 @@ class SpotifyCrawler:
                 for i, t in enumerate(tracks["tracks"]["items"]):
                     songs.append(
                         (
-                            t["name"],
                             t["id"],
+                            t["name"],
                             t["popularity"],
                             t["album"]["release_date"],
                         )
                     )
-
-        print(songs)
 
         return songs
 
@@ -150,13 +150,13 @@ class SpotifyCrawler:
             tracks = []
             for i, t in enumerate(response["tracks"]):
                 tracks.append(
-                    [t["name"], t["id"], t["popularity"], t["album"]["release_date"]]
+                    [t["id"], t["name"], t["popularity"], t["album"]["release_date"]]
                 )
 
             return tracks
 
     def get_track_features(self, track_name):
-        url = "https://api.spotify.com/v1/audio-features/" + str(track_name[1])
+        url = "https://api.spotify.com/v1/audio-features/" + str(track_name[0])
 
         response = self.request(url)
         if response is not None:
@@ -175,7 +175,7 @@ class SpotifyCrawler:
 
         return dataset
 
-    def dataset_by_year(self, from_year, to_year, file):
+    def dataset_by_year(self, from_year, to_year):
         artists = []
         for year in range(from_year, to_year):
             search_config = {"type": "artist", "year": str(year), "limit": "50"}
@@ -199,9 +199,9 @@ class SpotifyCrawler:
                             )
 
                     sub_dataset = pd.DataFrame(track_features)
-                    sub_dataset.to_csv(file, index=False, mode="a", header=False)
+                    self.sounds_storage.store_tracks(sub_dataset)
 
-    def dataset_by_genres(self, genres, file):
+    def dataset_by_genres(self, genres):
         for genre in genres:
             search_config = {"genre": genre, "limit": str(50)}
             tracks = self.search_for_genre(search_config)
@@ -217,7 +217,7 @@ class SpotifyCrawler:
                         )
 
                 sub_dataset = pd.DataFrame(track_features)
-                sub_dataset.to_csv(file, index=False, mode="a", header=False)
+                self.sounds_storage.store_tracks(sub_dataset)
 
 
 def main():
@@ -227,9 +227,6 @@ def main():
     spotify_crawler = SpotifyCrawler(client_id, client_secret)
 
     dataset = spotify_crawler.create_dataset(audio_features, "dataset.csv")
-
-    genres_list = spotify_crawler.get_genres_list()
-    print(genres_list)
 
     your_metal = [
         "alt-rock",
@@ -253,7 +250,7 @@ def main():
         "rockabilly",
     ]
 
-    spotify_crawler.dataset_by_genres(your_metal, "dataset.csv")
+    spotify_crawler.dataset_by_genres(your_metal)
 
 
 if __name__ == "__main__":
