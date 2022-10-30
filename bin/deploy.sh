@@ -4,10 +4,16 @@ set -euo pipefail
 
 cd "$(dirname "$0")"/..
 
-IMAGE_TAR_PATH=/tmp/soundations-snd-server.image.gz
+export COMPOSE_PROJECT_NAME=soundations
+
+IMAGE_TAR_PATH=/tmp/soundations-images.tar.gz
+IMAGE_NAMES=(
+  "soundations-snd-server"
+  "soundations-snd-proxy"
+)
 
 docker compose build
-docker save soundations-snd-server | gzip > $IMAGE_TAR_PATH
+docker save "${IMAGE_NAMES[@]}" | gzip > $IMAGE_TAR_PATH
 
 DOCKER_HOST="ssh://${SND_MAIN_SERVER_HOST}" docker load < $IMAGE_TAR_PATH
 DOCKER_HOST="ssh://${SND_MAIN_SERVER_HOST}" docker compose up -d --remove-orphans

@@ -1,7 +1,5 @@
 FROM alpine:20220715
 
-ARG SND_SERVER_PORT
-
 WORKDIR /soundations
 
 RUN  apk add --no-cache bash \
@@ -17,7 +15,5 @@ COPY ./pyproject.toml \
 COPY ./.venv /soundations/.venv/
 COPY ./snd-server /soundations/snd-server/
 COPY ./bin /soundations/bin/
-
-EXPOSE ${SND_SERVER_PORT}
 
 ENTRYPOINT [ "./bin/start-server-prod.sh" ]
