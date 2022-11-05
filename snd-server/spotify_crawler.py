@@ -53,6 +53,7 @@ class SpotifyCrawler:
         auth = "Bearer " + self.token
         headers = {"Authorization": auth}
         response = requests.get(url, headers=headers)
+        response.status_code = 429
 
         if response.status_code != 200:
             print(
@@ -70,9 +71,10 @@ class SpotifyCrawler:
             return Err("Error 404 in request")
 
         if response.status_code == 429:
-            sec_to_sleep = float(response.headers.get("retry-after"))
-            time.sleep(sec_to_sleep)
-            self.request(url)
+            sec_to_sleep = response.headers.get("retry-after")
+            if sec_to_sleep is not None:
+                time.sleep(float(sec_to_sleep))
+                self.request(url)
 
         if response.status_code == 503:
             self.request(url)
