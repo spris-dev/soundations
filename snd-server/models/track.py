@@ -57,7 +57,6 @@ class TrackFeatures(BaseModel):
     valence: float
     tempo: float
     type: str
-    id: str
     uri: str
     track_href: str
     analysis_url: str

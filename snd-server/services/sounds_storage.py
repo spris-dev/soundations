@@ -9,7 +9,7 @@ class SoundsStorage:
             w = csv.DictWriter(f, fieldnames=Track.__fields__)
             w.writeheader()
 
-    def store_tracks_csv(self, tracks):
+    def store_tracks(self, tracks):
         for track in tracks:
             with open(self.file, "a") as f:
                 w = csv.DictWriter(f, fieldnames=Track.__fields__)

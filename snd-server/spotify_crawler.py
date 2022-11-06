@@ -1,11 +1,14 @@
 import requests
-import sys
 import time
 import os
+
 from dotenv import load_dotenv
+from result import Ok, Err
+from string import Template
+
 from services.sounds_storage import SoundsStorage
 from models.track import Track, TrackFeatures, TrackGeneral
-from result import Ok, Err
+from models.search_config import SearchConfig
 
 
 audio_features = [
@@ -44,8 +47,8 @@ class SpotifyCrawler:
             auth=(self.client_id, self.client_secret),
         )
 
-        print("[Response] status_code: " + str(response.status_code), file=sys.stdout)
-        print("Access Token Headers: " + str(response.headers), file=sys.stdout)
+        print("[Response] status_code: " + str(response.status_code))
+        print("Access Token Headers: " + str(response.headers))
 
         return response.json()["access_token"]
 
@@ -53,52 +56,42 @@ class SpotifyCrawler:
         auth = "Bearer " + self.token
         headers = {"Authorization": auth}
         response = requests.get(url, headers=headers)
-        response.status_code = 429
 
         if response.status_code != 200:
-            print(
-                "[Response] status_code: " + str(response.status_code), file=sys.stdout
-            )
-            print("Response headers: " + str(response.headers), file=sys.stdout)
+            print("[Response] status_code: " + str(response.status_code))
+            print("Response headers: " + str(response.headers))
 
-        if response.status_code == 401:
-            self.token = self.get_access_token()
-            print("Token refreshed")
-            self.request(url)
-
-        if response.status_code == 404:
-            print("404")
-            return Err("Error 404 in request")
-
-        if response.status_code == 429:
-            sec_to_sleep = response.headers.get("retry-after")
-            if sec_to_sleep is not None:
-                time.sleep(float(sec_to_sleep))
+            if response.status_code == 401:
+                self.token = self.get_access_token()
+                print("Token refreshed")
                 self.request(url)
 
-        if response.status_code == 503:
-            self.request(url)
+            if response.status_code == 404:
+                print("404")
+                return Err("Error 404 in request")
+
+            if response.status_code == 429:
+                sec_to_sleep = response.headers.get("retry-after")
+                if sec_to_sleep is not None:
+                    time.sleep(float(sec_to_sleep))
+                    self.request(url)
+
+            if response.status_code == 503:
+                self.request(url)
 
         return Ok(response.json())
 
-    def search_tracks_by_genre(self, search_config):
-        genre = search_config["genre"]
+    def search_tracks_by_genre(self, search_config: SearchConfig):
+        count = search_config["count"]
         limit = search_config["limit"]
-
-        url = (
-            "https://api.spotify.com/v1/search?q=genre%3A"
-            + genre
-            + "&type="
-            + "track"
-            + "&limit="
-            + limit
-            + "&offset="
+        url = Template(
+            "https://api.spotify.com/v1/search?q=genre%3A$genre&type=track&limit=$limit&offset={}"
         )
+        url = url.safe_substitute(**search_config)
 
         tracks = []
-        for i in range(0, 1000, int(limit)):
-            curr_url = url + str(i)
-            tracks_general = self.request(curr_url)
+        for i in range(0, count, limit):
+            tracks_general = self.request(url.format(i))
 
             if isinstance(tracks_general, Ok):
                 for i, t in enumerate(tracks_general.value["tracks"]["items"]):
@@ -119,10 +112,10 @@ class SpotifyCrawler:
         return tracks
 
     def get_track_features(self, track_id):
-        url = "https://api.spotify.com/v1/audio-features/" + str(track_id)
+        url = "https://api.spotify.com/v1/audio-features/{}"
 
         try:
-            response = TrackFeatures.parse_obj(self.request(url).value)
+            response = TrackFeatures.parse_obj(self.request(url.format(track_id)).value)
             return Ok(response)
         except:
             return Err("Failed to parse track features")
@@ -136,9 +129,9 @@ class SpotifyCrawler:
 
     def dataset_by_genres(self, genres):
         for genre in genres:
-            search_config = {"genre": genre, "limit": str(50)}
+            search_config: SearchConfig = {"genre": genre, "limit": 50, "count": 100}
             tracks = self.search_tracks_by_genre(search_config)
-            self.sounds_storage.store_tracks_csv(tracks)
+            self.sounds_storage.store_tracks(tracks)
 
 
 def main():
