@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, conlist, validator
 from typing import List
 
 
@@ -14,29 +14,7 @@ class Artist(BaseModel):
     name: str
 
 
-class Track(BaseModel):
-    id: str
-    name: str
-    popularity: int
-    release_date: str
-    acousticness: float
-    danceability: float
-    duration_ms: int
-    energy: float
-    instrumentalness: float
-    key: int
-    liveness: float
-    loudness: float
-    mode: int
-    speechiness: float
-    tempo: float
-    time_signature: int
-    valence: float
-    album: Album
-    artists: List[Artist]
-
-
-class TrackGeneral(BaseModel):
+class SpotifyTrackSearchResponse(BaseModel):
     id: str
     name: str
     popularity: int
@@ -44,7 +22,15 @@ class TrackGeneral(BaseModel):
     artists: List[Artist]
 
 
-class TrackFeatures(BaseModel):
+class SpotifyTrackSearchResponseList(BaseModel):
+    tracks: List[SpotifyTrackSearchResponse] = Field(alias="tracks")
+
+    @validator("tracks", pre=True)
+    def only_valid_items(cls, v):
+        return v["items"]
+
+
+class SpotifyTrackFeaturesResponse(BaseModel):
     danceability: float
     energy: float
     key: int
@@ -56,9 +42,13 @@ class TrackFeatures(BaseModel):
     liveness: float
     valence: float
     tempo: float
-    type: str
-    uri: str
-    track_href: str
-    analysis_url: str
     duration_ms: int
     time_signature: int
+
+
+class Track(SpotifyTrackSearchResponse, SpotifyTrackFeaturesResponse):
+    pass
+
+
+class TrackList(BaseModel):
+    __root__: List[Track]

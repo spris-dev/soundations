@@ -1,50 +1,39 @@
 import requests
 import time
-import os
 
-from dotenv import load_dotenv
-from result import Ok, Err
-from string import Template
+from result import Ok, Err, Result
+from typing import TypeVar
 
+from services.config import Config
 from services.sounds_storage import SoundsStorage
-from models.track import Track, TrackFeatures, TrackGeneral
+from models.track import (
+    Track,
+    TrackList,
+    SpotifyTrackFeaturesResponse,
+    SpotifyTrackSearchResponseList,
+)
 from models.search_config import SearchConfig
 
 
-audio_features = [
-    "id",
-    "name",
-    "popularity",
-    "release_date",
-    "acousticness",
-    "danceability",
-    "duration_ms",
-    "energy",
-    "instrumentalness",
-    "key",
-    "liveness",
-    "loudness",
-    "mode",
-    "speechiness",
-    "tempo",
-    "time_signature",
-    "valence",
-]
+T = TypeVar("T")
 
 
 class SpotifyCrawler:
-    def __init__(self, client_id, client_secret):
-        self.sounds_storage = SoundsStorage("dataset.csv")
-        self.client_id = client_id
-        self.client_secret = client_secret
+    def __init__(self):
+        self.config = Config()
+        self.sounds_storage = SoundsStorage(self.config.sounds_storage_path)
+
         self.token_url = "https://accounts.spotify.com/api/token"
+        self.track_by_genre_url = "https://api.spotify.com/v1/search?q=genre%3A{genre}&type=track&limit={limit}&offset={offset}"
+        self.track_features_url = "https://api.spotify.com/v1/audio-features/{id}"
+
         self.token = self.get_access_token()
 
     def get_access_token(self):
         response = requests.post(
             self.token_url,
             data={"grant_type": "client_credentials"},
-            auth=(self.client_id, self.client_secret),
+            auth=(self.config.spotify_client_id, self.config.spotify_client_secret),
         )
 
         print("[Response] status_code: " + str(response.status_code))
@@ -52,7 +41,7 @@ class SpotifyCrawler:
 
         return response.json()["access_token"]
 
-    def request(self, url):
+    def request(self, url, T) -> Result[T, str]:
         auth = "Bearer " + self.token
         headers = {"Authorization": auth}
         response = requests.get(url, headers=headers)
@@ -64,7 +53,7 @@ class SpotifyCrawler:
             if response.status_code == 401:
                 self.token = self.get_access_token()
                 print("Token refreshed")
-                self.request(url)
+                return self.request(url, T)
 
             if response.status_code == 404:
                 print("404")
@@ -74,71 +63,70 @@ class SpotifyCrawler:
                 sec_to_sleep = response.headers.get("retry-after")
                 if sec_to_sleep is not None:
                     time.sleep(float(sec_to_sleep))
-                    self.request(url)
+                    return self.request(url, T)
 
             if response.status_code == 503:
-                self.request(url)
+                return self.request(url, T)
 
-        return Ok(response.json())
+            return Err("Unknown error in request")
 
-    def search_tracks_by_genre(self, search_config: SearchConfig):
+        return Ok(T.parse_obj(response.json()))
+
+    def fetch_tracks_by_genres(self, search_config: SearchConfig) -> TrackList:
+        genre = search_config["genre"]
         count = search_config["count"]
         limit = search_config["limit"]
-        url = Template(
-            "https://api.spotify.com/v1/search?q=genre%3A$genre&type=track&limit=$limit&offset={}"
-        )
-        url = url.safe_substitute(**search_config)
+        url = self.track_by_genre_url.format(genre=genre, limit=limit, offset=0)
 
         tracks = []
         for i in range(0, count, limit):
-            tracks_general = self.request(url.format(i))
+            tracks_general = self.request(
+                url.format(offset=i), SpotifyTrackSearchResponseList
+            )
 
             if isinstance(tracks_general, Ok):
-                for i, t in enumerate(tracks_general.value["tracks"]["items"]):
-                    track_features = TrackGeneral.parse_obj(t).dict()
+                tracks_general = tracks_general.value.tracks
+                for track in tracks_general:
+                    extra_features = self.fetch_track_features(track.id)
 
-                    extra_features = self.get_track_features(t["id"])
                     if isinstance(extra_features, Ok):
-                        track_features.update(extra_features.value.dict())
-                        track_features.update(
-                            {"release_date": track_features["album"]["release_date"]}
-                        )
                         try:
-                            new_track = Track.parse_obj(track_features)
-                            tracks.append(new_track)
+                            track = track.dict()
+                            track.update(extra_features.value.dict())
+                            tracks.append(Track.parse_obj(track))
                         except:
                             print("Error while parsing track")
 
-        return tracks
+        return TrackList.parse_obj(tracks)
 
-    def get_track_features(self, track_id):
-        url = "https://api.spotify.com/v1/audio-features/{}"
+    def fetch_track_features(
+        self, track_id
+    ) -> Result[SpotifyTrackFeaturesResponse, str]:
+        url = self.track_features_url
 
         try:
-            response = TrackFeatures.parse_obj(self.request(url.format(track_id)).value)
+            response = SpotifyTrackFeaturesResponse.parse_obj(
+                self.request(
+                    url.format(id=track_id), SpotifyTrackFeaturesResponse
+                ).value
+            )
             return Ok(response)
         except:
             return Err("Failed to parse track features")
 
-    def get_genres_list(self):
-        url = "https://api.spotify.com/v1/recommendations/available-genre-seeds"
-
-        response = self.request(url)
-        if isinstance(response, Ok):
-            return response.value
-
-    def dataset_by_genres(self, genres):
+    def store_dataset_by_genres(self, genres):
         for genre in genres:
-            search_config: SearchConfig = {"genre": genre, "limit": 50, "count": 100}
-            tracks = self.search_tracks_by_genre(search_config)
+            search_config: SearchConfig = {
+                "genre": genre,
+                "limit": self.config.spoify_limit,
+                "count": self.config.tracks_number_for_genre,
+            }
+            tracks = self.fetch_tracks_by_genres(search_config).__root__
             self.sounds_storage.store_tracks(tracks)
 
 
 def main():
-    load_dotenv()
-    client_id = os.environ.get("CLIENT_ID")
-    client_secret = os.environ.get("CLIENT_SECRET")
-    spotify_crawler = SpotifyCrawler(client_id, client_secret)
+    spotify_crawler = SpotifyCrawler()
 
     your_metal = [
         "alt-rock",
@@ -161,7 +149,7 @@ def main():
         "rock-n-roll",
         "rockabilly",
     ]
-    spotify_crawler.dataset_by_genres(your_metal)
+    spotify_crawler.store_dataset_by_genres(your_metal)
 
 
 if __name__ == "__main__":
