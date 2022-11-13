@@ -21,15 +21,13 @@ T = TypeVar("T")
 class SpotifyCrawler:
     def __init__(self):
         self.config = Config()
-        self.sounds_storage = SoundsStorage(self.config.sounds_storage_path)
+        self.spotify_token = ""
 
         self.token_url = "https://accounts.spotify.com/api/token"
         self.track_by_genre_url = "https://api.spotify.com/v1/search?q=genre%3A{genre}&type=track&limit={limit}&offset={offset}"
         self.track_features_url = "https://api.spotify.com/v1/audio-features/{id}"
 
-        self.token = self.get_access_token()
-
-    def get_access_token(self):
+    def set_access_token(self):
         response = requests.post(
             self.token_url,
             data={"grant_type": "client_credentials"},
@@ -39,10 +37,10 @@ class SpotifyCrawler:
         print("[Response] status_code: " + str(response.status_code))
         print("Access Token Headers: " + str(response.headers))
 
-        return response.json()["access_token"]
+        self.spotify_token = response.json()["access_token"]
 
     def request(self, url, T) -> Result[T, str]:
-        auth = "Bearer " + self.token
+        auth = "Bearer " + self.spotify_token
         headers = {"Authorization": auth}
         response = requests.get(url, headers=headers)
 
@@ -51,7 +49,7 @@ class SpotifyCrawler:
             print("Response headers: " + str(response.headers))
 
             if response.status_code == 401:
-                self.token = self.get_access_token()
+                self.set_access_token()
                 print("Token refreshed")
                 return self.request(url, T)
 
@@ -115,18 +113,22 @@ class SpotifyCrawler:
             return Err("Failed to parse track features")
 
     def store_dataset_by_genres(self, genres):
+        self.sounds_storage = SoundsStorage(self.config.sounds_storage_path)
+
         for genre in genres:
             search_config: SearchConfig = {
                 "genre": genre,
                 "limit": self.config.spoify_limit,
                 "count": self.config.tracks_number_for_genre,
             }
+
             tracks = self.fetch_tracks_by_genres(search_config).__root__
             self.sounds_storage.store_tracks(tracks)
 
 
 def main():
     spotify_crawler = SpotifyCrawler()
+    spotify_crawler.set_access_token()
 
     your_metal = [
         "alt-rock",
