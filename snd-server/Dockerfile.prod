@@ -1,0 +1,19 @@
+FROM alpine:20220715
+
+WORKDIR /soundations
+
+RUN  apk add --no-cache bash \
+  && apk add --no-cache poetry \
+  && apk add --no-cache python3 && ln -sf python3 /usr/bin/python \
+  && find /usr/lib -type d -regex .*__pycache__ | xargs rm -rf
+
+COPY ./pyproject.toml \
+  ./poetry.toml \
+  ./poetry.lock \
+  /soundations/
+
+COPY ./.venv /soundations/.venv/
+COPY ./snd-server /soundations/snd-server/
+COPY ./bin /soundations/bin/
+
+ENTRYPOINT [ "./bin/start-server-prod.sh" ]

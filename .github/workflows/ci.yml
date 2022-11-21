@@ -64,6 +64,24 @@ jobs:
       run: cp -r node-deps-cache node_modules
 
 
-    # Actual CI actions
     - name: Lint source code
       run: ./bin/docker-run.sh ./bin/lint.sh
+
+
+    - name: Setup SSH Keys and known_hosts
+      env:
+        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        SND_MAIN_SERVER_KEY: ${{ secrets.SND_MAIN_SERVER_KEY }}
+        SND_KNOWN_HOSTS: ${{ secrets.SND_KNOWN_HOSTS }}
+      run: |
+        ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+        ssh-add - <<< "${{ secrets.SND_MAIN_SERVER_KEY }}"
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SND_KNOWN_HOSTS }}" > ~/.ssh/known_hosts
+
+    - name: Deploy
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
+      run: ./bin/deploy.sh
+      env:
+        SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        SND_MAIN_SERVER_HOST: ${{ secrets.SND_MAIN_SERVER_HOST }}

@@ -1,3 +1,4 @@
+import datetime
 from fastapi import FastAPI
 
 from context import Context
@@ -26,4 +27,4 @@ async def shutdown():
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Hello World", "now": format(datetime.datetime.now())}
