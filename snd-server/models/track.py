@@ -51,4 +51,4 @@ class Track(SpotifyTrackSearchResponse, SpotifyTrackFeaturesResponse):
 
 
 class TrackList(BaseModel):
-    __root__: List[Track]
+    list: List[Track]
