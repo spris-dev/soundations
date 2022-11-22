@@ -2,13 +2,12 @@ import requests
 import time
 
 from result import Ok, Err, Result
-from typing import TypeVar
+from typing import TypeVar, List
 
 from services.config import Config
 from services.sounds_storage import SoundsStorage
 from models.track import (
     Track,
-    TrackList,
     SpotifyTrackFeaturesResponse,
     SpotifyTrackSearchResponseList,
 )
@@ -70,17 +69,15 @@ class SpotifyCrawler:
 
         return Ok(T.parse_obj(response.json()))
 
-    def fetch_tracks_by_genres(self, search_config: SearchConfig) -> TrackList:
+    def fetch_tracks_by_genres(self, search_config: SearchConfig) -> List[Track]:
         genre = search_config["genre"]
         count = search_config["count"]
         limit = search_config["limit"]
-        url = self.track_by_genre_url.format(genre=genre, limit=limit, offset=0)
 
         tracks = []
         for i in range(0, count, limit):
-            tracks_general = self.request(
-                url.format(offset=i), SpotifyTrackSearchResponseList
-            )
+            url = self.track_by_genre_url.format(genre=genre, limit=limit, offset=i)
+            tracks_general = self.request(url, SpotifyTrackSearchResponseList)
 
             if isinstance(tracks_general, Ok):
                 tracks_general = tracks_general.value.tracks
@@ -95,7 +92,7 @@ class SpotifyCrawler:
                         except:
                             print("Error while parsing track")
 
-        return TrackList.parse_obj(tracks)
+        return tracks
 
     def fetch_track_features(
         self, track_id
@@ -122,7 +119,7 @@ class SpotifyCrawler:
                 "count": self.config.tracks_number_for_genre,
             }
 
-            tracks = self.fetch_tracks_by_genres(search_config).__root__
+            tracks = self.fetch_tracks_by_genres(search_config)
             self.sounds_storage.store_tracks(tracks)
 
 
@@ -150,6 +147,11 @@ def main():
         "rock",
         "rock-n-roll",
         "rockabilly",
+        "classical",
+        "hip-hop",
+        "indie-pop",
+        "drum-and-bass",
+        "indie-pop",
     ]
     spotify_crawler.store_dataset_by_genres(your_metal)
 
