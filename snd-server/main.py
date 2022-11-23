@@ -13,6 +13,13 @@ ctx = Context()
 @app.on_event("startup")
 async def startup():
     ctx.config = Config()
+
+    if (
+        ctx.config.spotify_client_id is not None
+        and "dummy" in ctx.config.spotify_client_id
+    ):
+        print("[Config]: Using dummy values for Spotify secrets")
+
     ctx.sqlite_storage = SqliteStorage(ctx)
     await ctx.sqlite_storage.connect()
     await ctx.sqlite_storage.migrate()
