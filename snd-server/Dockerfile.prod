@@ -1,11 +1,8 @@
-FROM alpine:20220715
+FROM python:3.11.0-slim
+
+RUN pip install 'poetry==1.2.2'
 
 WORKDIR /soundations
-
-RUN  apk add --no-cache bash \
-  && apk add --no-cache poetry \
-  && apk add --no-cache python3 && ln -sf python3 /usr/bin/python \
-  && find /usr/lib -type d -regex .*__pycache__ | xargs rm -rf
 
 COPY ./pyproject.toml \
   ./poetry.toml \

@@ -36,7 +36,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: python-deps-cache
-        key: ${{ runner.os }}-python-deps-cache-${{ hashFiles('Dockerfile.builder', 'poetry.lock') }}
+        key: ${{ runner.os }}-python-deps-cache-${{ hashFiles('Dockerfile.builder', 'snd-server/Dockerfile.prod', 'poetry.lock') }}
 
     - name: Install python deps
       if: steps.python-deps-cache.outputs.cache-hit != 'true'
