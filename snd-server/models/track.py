@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, conlist, validator
+from pydantic import BaseModel, Field, validator
 from typing import List
 
 
@@ -64,7 +64,3 @@ class SpotifyTrackFeaturesResponse(BaseModel):
 
 class Track(SpotifyTrackSearchResponse, SpotifyTrackFeaturesResponse):
     pass
-
-
-class TrackList(BaseModel):
-    __root__: List[Track]

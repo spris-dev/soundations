@@ -137,14 +137,14 @@ class SpotifyCrawler:
 
         return tracks
 
-    def fetch_albums_by_artist(self, artist: Artist) -> List[Album]:
+    def fetch_albums_by_artist(self, artist: Artist) -> Result[List[Album], str]:
         artist_id = artist.id
 
         url = self.artists_album_url.format(id=artist_id, limit=10, offset=0)
         albums = self.request(url, SpotifyAlbumSearchResponseList)
 
         if isinstance(albums, Ok):
-            return albums.value.albums
+            return Ok(albums.value.albums)
         else:
             return Err("Error while parsing album")
 
@@ -233,6 +233,11 @@ def main():
         "rock",
         "rock-n-roll",
         "rockabilly",
+        "classical",
+        "hip-hop",
+        "indie-pop",
+        "drum-and-bass",
+        "indie-pop",
     ]
 
     spotify_crawler.store_dataset_by_genres(your_metal)
