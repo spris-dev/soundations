@@ -8,6 +8,8 @@ services:
       - SND_SERVER_HOST=${SND_SERVER_HOST:-0.0.0.0}
       - SND_SERVER_PORT=${SND_SERVER_PORT:-6660}
       - SND_SQLITE_DB_PATH=////opt/soundations-data/snd-server-main.sqlite
+      - SND_SPOTIFY_CLIENT_ID=${SND_SPOTIFY_CLIENT_ID:-dummy_spotify_client_id}
+      - SND_SPOTIFY_CLIENT_SECRET=${SND_SPOTIFY_CLIENT_SECRET:-dummy_spotify_client_secret}
     build:
       context: ./
       dockerfile: ./snd-server/Dockerfile.prod
