@@ -12,5 +12,5 @@ class Config:
 
     sounds_storage_path = "dataset.csv"
     artists_storage_path = "artists.csv"
-    search_count = 1000
-    spoify_limit = 50
+    items_per_search = 1000
+    spotify_limit = 50

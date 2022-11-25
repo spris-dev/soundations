@@ -24,10 +24,9 @@ T = TypeVar("T")
 
 
 class SpotifyCrawler:
-    def __init__(self):
+    def __init__(self, resume: bool):
+        self.resume = resume
         self.config = Config()
-        self.limit = self.config.spoify_limit
-        self.search_count = self.config.search_count
         self.spotify_token = ""
 
         self.token_url = "https://accounts.spotify.com/api/token"
@@ -38,15 +37,6 @@ class SpotifyCrawler:
         self.artists_tracks_url = "https://api.spotify.com/v1/search?q=artist%3A'{name}'&type=track&limit={limit}&offset={offset}"
 
         self.artists_ids = set()
-
-        parser = argparse.ArgumentParser()
-        parser.add_argument(
-            "-r",
-            "--resume",
-            action="store_true",
-            help="start crawling from the point where you stopped",
-        )
-        self.args = parser.parse_args()
 
     def set_access_token(self):
         response = requests.post(
@@ -96,9 +86,9 @@ class SpotifyCrawler:
 
     def fetch_artists_by_genre(self, genre: str) -> List[Artist]:
         artists = []
-        for i in range(0, self.search_count, self.limit):
+        for i in range(0, self.config.items_per_search, self.config.spotify_limit):
             url = self.artist_by_genre_url.format(
-                genre=genre, limit=self.limit, offset=i
+                genre=genre, limit=self.config.spotify_limit, offset=i
             )
             artists_response = self.request(url, SpotifyArtistSearchResponseList)
             if isinstance(artists_response, Ok):
@@ -108,9 +98,9 @@ class SpotifyCrawler:
 
     def fetch_artist_tracks(self, artist: Artist) -> List[Track]:
         tracks = []
-        for i in range(0, self.search_count, self.limit):
+        for i in range(0, self.config.items_per_search, self.config.spotify_limit):
             url = self.artists_tracks_url.format(
-                name=artist.name, limit=self.limit, offset=i
+                name=artist.name, limit=self.config.spotify_limit, offset=i
             )
             tracks_general = self.request(url, SpotifyTrackSearchResponseList)
 
@@ -150,9 +140,9 @@ class SpotifyCrawler:
 
     def fetch_tracks_by_genre(self, genre: str) -> List[Track]:
         tracks = []
-        for i in range(0, self.search_count, self.limit):
+        for i in range(0, self.config.items_per_search, self.config.spotify_limit):
             url = self.track_by_genre_url.format(
-                genre=genre, limit=self.limit, offset=i
+                genre=genre, limit=self.config.spotify_limit, offset=i
             )
             tracks_general = self.request(url, SpotifyTrackSearchResponseList)
 
@@ -190,8 +180,8 @@ class SpotifyCrawler:
         self.sounds_storage = SoundsStorage(
             self.config.sounds_storage_path, self.config.artists_storage_path
         )
-        if self.args.resume:
-            self.artists_ids = self.sounds_storage.get_stored_artists()
+        if self.resume:
+            self.artists_ids = self.sounds_storage.get_artists()
         else:
             self.sounds_storage.write_headers()
 
@@ -210,7 +200,16 @@ class SpotifyCrawler:
 
 
 def main():
-    spotify_crawler = SpotifyCrawler()
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-r",
+        "--resume",
+        action="store_true",
+        help="start crawling from the point where you stopped",
+    )
+    args = parser.parse_args()
+
+    spotify_crawler = SpotifyCrawler(args.resume)
     spotify_crawler.set_access_token()
 
     your_metal = [

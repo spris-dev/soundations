@@ -29,7 +29,7 @@ class SoundsStorage:
                 ]
             )
 
-    def get_stored_artists(self):
+    def get_artists(self):
         artists_ids = set()
         with open(self.artists_file, "r") as f:
             reader = csv.reader(f)
