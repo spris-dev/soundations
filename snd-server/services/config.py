@@ -11,5 +11,6 @@ class Config:
     spotify_client_secret: str = os.environ["SND_SPOTIFY_CLIENT_SECRET"]
 
     sounds_storage_path = "dataset.csv"
-    tracks_number_for_genre = 1000
-    spoify_limit = 50
+    artists_storage_path = "artists.csv"
+    items_per_search = 1000
+    spotify_limit = 50

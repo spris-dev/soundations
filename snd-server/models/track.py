@@ -9,9 +9,21 @@ class Album(BaseModel):
     images: list
 
 
+class SpotifyAlbumSearchResponseList(BaseModel):
+    albums: List[Album] = Field(alias="items")
+
+
 class Artist(BaseModel):
     id: str
     name: str
+
+
+class SpotifyArtistSearchResponseList(BaseModel):
+    artists: List[Artist] = Field(alias="artists")
+
+    @validator("artists", pre=True)
+    def only_valid_items(cls, v):
+        return v["items"]
 
 
 class SpotifyTrackSearchResponse(BaseModel):
@@ -20,6 +32,10 @@ class SpotifyTrackSearchResponse(BaseModel):
     popularity: int
     album: Album
     artists: List[Artist]
+
+
+class SpotifyTrackSearchByAlbumResponseList(BaseModel):
+    tracks: List[SpotifyTrackSearchResponse] = Field(alias="items")
 
 
 class SpotifyTrackSearchResponseList(BaseModel):
