@@ -1,7 +1,10 @@
+import logging
 from pathlib import Path
 from databases import Database
 
 from context import Context
+
+logger = logging.getLogger(__name__)
 
 
 class SqliteStorage:
@@ -22,6 +25,6 @@ class SqliteStorage:
 
         async with self.db.transaction():
             for migration in migrations:
-                print(f"Running migration {migration}")
+                logger.info(f"Running migration {migration}")
 
                 await self.db.execute(query=migration.read_text())
