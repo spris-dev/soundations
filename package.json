@@ -2,20 +2,45 @@
   "name": "soundations",
   "version": "1.0.0",
   "description": "Sound recommendations project.",
+  "type": "module",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/spris-dev/soundations.git"
   },
+  "dependencies": {
+    "preact": "10.11.2"
+  },
   "devDependencies": {
-    "husky": "^8.0.0",
-    "lint-staged": "^13.0.3",
-    "pyright": "^1.1.275"
+    "@preact/preset-vite": "2.4.0",
+    "@types/node": "18.11.9",
+    "@typescript-eslint/eslint-plugin": "5.44.0",
+    "@typescript-eslint/parser": "5.44.0",
+    "autoprefixer": "10.4.13",
+    "eslint": "8.28.0",
+    "eslint-config-prettier": "8.5.0",
+    "eslint-plugin-import": "2.26.0",
+    "eslint-plugin-n": "15.5.1",
+    "eslint-plugin-prettier": "4.2.1",
+    "eslint-plugin-promise": "6.1.1",
+    "husky": "8.0.0",
+    "lint-staged": "13.0.3",
+    "postcss": "8.4.19",
+    "pyright": "1.1.275",
+    "tailwindcss": "3.2.4",
+    "typescript": "4.9.3",
+    "vite": "3.2.3"
   },
   "scripts": {
     "prepare": "husky install",
-    "precommit": "lint-staged"
+    "precommit": "lint-staged",
+    "client:dev": "vite snd-client",
+    "client:build": "tsc -p snd-client && vite build snd-client",
+    "client:preview": "vite preview snd-client",
+    "client:lint": "eslint --max-warnings 0 './snd-client'",
+    "client:lint:fix": "eslint --fix --max-warnings 0"
   },
   "lint-staged": {
-    "*.py": "poetry run black"
+    "*.py": "poetry run black",
+    "*.{ts,tsx,js,jsx}": "npm run client:lint:fix"
   }
 }

@@ -8,3 +8,4 @@ cd "$(dirname "$0")"/..
 
 poetry run black --check snd-server
 poetry run npx --yes pyright snd-server
+npm run client:lint

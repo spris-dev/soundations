@@ -64,8 +64,14 @@ jobs:
       run: cp -r node-deps-cache node_modules
 
 
+    # Lint source code
     - name: Lint source code
       run: ./bin/docker-run.sh ./bin/lint.sh
+
+
+    # Build client static assets
+    - name: Build client
+      run: ./bin/docker-run.sh ./bin/build-client.sh
 
 
     - name: Setup SSH Keys and known_hosts
