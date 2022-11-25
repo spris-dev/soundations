@@ -1,0 +1,23 @@
+@spotify_base_url = https://api.spotify.com/v1
+@spotify_basic_auth = {{$dotenv SND_SPOTIFY_CLIENT_ID}}:{{$dotenv SND_SPOTIFY_CLIENT_SECRET}}
+
+### Spotify
+
+### Spotify Access Token
+# @name spotify_token
+POST https://accounts.spotify.com/api/token
+Authorization: Basic {{spotify_basic_auth}}
+content-type: application/x-www-form-urlencoded
+
+grant_type=client_credentials
+
+###
+
+@spotify_access_token={{spotify_token.response.body.access_token}}
+
+### Spotify Search
+
+# @prompt type
+# @prompt q
+GET {{spotify_base_url}}/search?type={{type}}&q={{q}}&limit=5
+Authorization: Bearer {{spotify_access_token}}
