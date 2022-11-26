@@ -24,6 +24,7 @@
     "eslint-plugin-promise": "6.1.1",
     "husky": "8.0.0",
     "lint-staged": "13.0.3",
+    "openapi-typescript-codegen": "0.23.0",
     "postcss": "8.4.19",
     "pyright": "1.1.275",
     "tailwindcss": "3.2.4",

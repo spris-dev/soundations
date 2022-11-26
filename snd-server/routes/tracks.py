@@ -24,8 +24,8 @@ class TracksRecommendationsResponse(BaseModel):
 def create_tracks_router(ctx: Context):
     router = APIRouter()
 
-    @router.get("/tracks", response_model=TracksSearchResponse)
-    async def tracks(
+    @router.get("/tracks", response_model=TracksSearchResponse, tags=["tracks"])
+    async def get_tracks(
         q: str = Query(min_length=1, max_length=128),
         limit: int = Query(default=5, ge=1, le=10),
         offset: int = Query(default=0, ge=0, le=1000),
@@ -46,8 +46,9 @@ def create_tracks_router(ctx: Context):
     @router.get(
         "/tracks/{track_id}/recommendations",
         response_model=TracksRecommendationsResponse,
+        tags=["tracks"],
     )
-    async def tracks_recommendations(
+    async def get_track_recommendations(
         track_id: str,
         limit: int = Query(default=6, ge=1, le=10),
         offset: int = Query(default=0, ge=0, le=50),

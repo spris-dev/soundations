@@ -6,7 +6,7 @@ from context import Context
 def create_health_router(ctx: Context):
     router = APIRouter()
 
-    @router.get("/health")
+    @router.get("/health", tags=["health"])
     async def health():
         return {
             "ok": True,
