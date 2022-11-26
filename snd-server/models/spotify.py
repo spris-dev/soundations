@@ -32,7 +32,19 @@ class SpotifyApiTrack(BaseModel):
 
 class SpotifyApiTrackSearchResponseTracks(BaseModel):
     items: List[SpotifyApiTrack]
+    limit: int
+    offset: int
+    total: int
 
 
 class SpotifyApiTrackSearchResponse(BaseModel):
     tracks: SpotifyApiTrackSearchResponseTracks
+
+
+class SpotifyApiError(BaseModel):
+    status: int
+    message: str
+
+
+class SpotifyApiErrorResponse(BaseModel):
+    error: SpotifyApiError
