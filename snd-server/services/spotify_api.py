@@ -6,7 +6,12 @@ from result import Ok, Err, Result
 from httpx import Response
 
 from context import Context
-from models.spotify import SpotifyApiTrackSearchResponse, SpotifyApiTrack
+from models.error import SoundationsError
+from models.spotify import (
+    SpotifyApiTrackSearchResponse,
+    SpotifyApiTrackSearchResponseTracks,
+    SpotifyApiErrorResponse,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +23,7 @@ SPOTIFY_API_URL = "https://api.spotify.com/v1"
 
 TModel = TypeVar("TModel", bound=type(BaseModel))
 TOk = TypeVar("TOk")
-SpotifyResult = Result[TOk, Exception | Response]
+SpotifyResult = Result[TOk, SoundationsError]
 
 
 class SpotifyApiCallState(TypedDict):
@@ -34,7 +39,7 @@ class SpotifyApi:
 
     async def search_tracks(
         self, q: str, limit: int = 1, offset: int = 0
-    ) -> SpotifyResult[list[SpotifyApiTrack]]:
+    ) -> SpotifyResult[SpotifyApiTrackSearchResponseTracks]:
         return await self.api.search_tracks(q=q, limit=limit, offset=offset)
 
 
@@ -60,7 +65,7 @@ class SpotifyApiImpl:
 
             logger.info("Spotify access token refreshed")
         except Exception as err:
-            logger.error("Failed to fetch spotify access token", err)
+            logger.exception(f"Failed to fetch spotify access token: {str(err)}")
 
     async def call_spotify_api(
         self,
@@ -75,16 +80,14 @@ class SpotifyApiImpl:
         try:
             response = await call(headers)
         except Exception as err:
-            logger.error("Error when calling Spotify API", err)
-            return Err(err)
+            logger.error(f"Error when calling Spotify API: {str(err)}")
+            return Err(SoundationsError(424))
 
         if not response.is_success:
             retry_attempt = state.get("retry_attempt", 1)
 
             logger.warning(
-                "Error HTTP status when calling Spotify API",
-                response.status_code,
-                response.text,
+                f"HTTP status {response.status_code} when calling Spotify API: {response.text}"
             )
 
             if response.status_code == 401:
@@ -100,20 +103,30 @@ class SpotifyApiImpl:
                     call, model, {"retry_attempt": retry_attempt + 1}
                 )
 
-            return Err(response)
+            try:
+                error_body = SpotifyApiErrorResponse.parse_raw(response.content)
+                error_message = error_body.error.message
+            except:
+                error_message = None
+
+            return Err(SoundationsError(response.status_code, error_message))
 
         try:
             return Ok(model.parse_raw(response.content))
         except Exception as err:
-            logger.error("Error when parsing Spotify API response body", err)
-            return Err(err)
+            logger.error(f"Error when parsing Spotify API response body: {str(err)}")
+            return Err(
+                SoundationsError(
+                    424, "We received something completely unexpected from Spotify"
+                )
+            )
 
     async def search_tracks(
         self,
         q: str,
         limit: int = 1,
         offset: int = 0,
-    ) -> SpotifyResult[list[SpotifyApiTrack]]:
+    ) -> SpotifyResult[SpotifyApiTrackSearchResponseTracks]:
         url = f"{SPOTIFY_API_URL}/search?type=track&q={q}&limit={limit}&offset={offset}"
 
         result = await self.call_spotify_api(
@@ -124,4 +137,4 @@ class SpotifyApiImpl:
             model=SpotifyApiTrackSearchResponse,
         )
 
-        return result.map(lambda resp: resp.tracks.items)
+        return result.map(lambda resp: resp.tracks)

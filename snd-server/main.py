@@ -8,6 +8,7 @@ from services.sqlite_storage import SqliteStorage
 from services.config import Config
 from services.spotify_api import SpotifyApi
 from routes.health import create_health_router
+from routes.tracks import create_tracks_router
 
 app = FastAPI()
 ctx = Context()
@@ -33,6 +34,7 @@ async def startup():
     await ctx.sqlite_storage.migrate()
 
     app.include_router(create_health_router(ctx), prefix="/api")
+    app.include_router(create_tracks_router(ctx), prefix="/api")
 
 
 @app.on_event("shutdown")
