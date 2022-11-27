@@ -1,16 +1,20 @@
-from fastapi import APIRouter, Query, HTTPException
+from fastapi import APIRouter, Query, HTTPException, Response
 from result import Ok, Err
 from pydantic import BaseModel
 
 from context import Context
-from models.spotify import SpotifyApiTrackSearchResponseTracks, SpotifyApiTrack
+from models.soundations import SoundationsTrack
+from mappers.soundations import create_track_from_spotify
 
 
-class TracksSearchResponse(SpotifyApiTrackSearchResponseTracks):
-    pass
+class TracksSearchResponse(BaseModel):
+    items: list[SoundationsTrack]
+    limit: int
+    offset: int
+    total: int
 
 
-class TrackRecommendationsItem(SpotifyApiTrack):
+class TrackRecommendationsItem(SoundationsTrack):
     score: float
 
 
@@ -26,6 +30,7 @@ def create_tracks_router(ctx: Context):
 
     @router.get("/tracks", response_model=TracksSearchResponse, tags=["tracks"])
     async def get_tracks(
+        response: Response,
         q: str = Query(min_length=1, max_length=128),
         limit: int = Query(default=5, ge=1, le=10),
         offset: int = Query(default=0, ge=0, le=1000),
@@ -34,8 +39,10 @@ def create_tracks_router(ctx: Context):
 
         match result:
             case Ok(tracks):
+                response.headers["Cache-Control"] = "public, max-age=7200"
+
                 return TracksSearchResponse(
-                    items=tracks.items,
+                    items=[create_track_from_spotify(item) for item in tracks.items],
                     limit=tracks.limit,
                     offset=tracks.offset,
                     total=tracks.total,

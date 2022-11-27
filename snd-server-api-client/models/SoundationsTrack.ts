@@ -5,7 +5,7 @@
 import type { SpotifyApiAlbum } from './SpotifyApiAlbum';
 import type { SpotifyApiArtist } from './SpotifyApiArtist';
 
-export type SpotifyApiTrack = {
+export type SoundationsTrack = {
     id: string;
     name: string;
     album: SpotifyApiAlbum;
