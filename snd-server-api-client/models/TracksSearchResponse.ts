@@ -2,10 +2,10 @@
 /* tslint:disable */
 /* eslint-disable */
 
-import type { SpotifyApiTrack } from './SpotifyApiTrack';
+import type { SoundationsTrack } from './SoundationsTrack';
 
 export type TracksSearchResponse = {
-    items: Array<SpotifyApiTrack>;
+    items: Array<SoundationsTrack>;
     limit: number;
     offset: number;
     total: number;
