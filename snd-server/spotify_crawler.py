@@ -113,7 +113,7 @@ class SpotifyCrawler:
                             correct_artist = True
 
                     if not correct_artist:
-                        break
+                        continue
 
                     extra_features = self.fetch_track_features(track.id)
 
@@ -177,22 +177,26 @@ class SpotifyCrawler:
             return Err("Failed to parse track features")
 
     def store_dataset_by_genres(self, genres):
-        self.sounds_storage = SoundsStorage(
-            self.config.sounds_storage_path, self.config.artists_storage_path
-        )
+        self.sounds_storage = SoundsStorage()
         if self.resume:
             self.artists_ids = self.sounds_storage.get_artists()
+            print(self.artists_ids)
         else:
             self.sounds_storage.write_headers()
 
         for genre in genres:
+            print(genre)
             artists = self.fetch_artists_by_genre(genre)
+            print(artists)
 
             for artist in artists:
+                print(artist)
                 if artist.id in self.artists_ids:
-                    break
+                    print("True")
+                    continue
 
                 tracks = self.fetch_artist_tracks(artist)
+                print(len(tracks))
 
                 self.artists_ids.add(artist.id)
                 self.sounds_storage.store_tracks(tracks)
