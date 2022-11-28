@@ -64,3 +64,8 @@ class SpotifyTrackFeaturesResponse(BaseModel):
 
 class Track(SpotifyTrackSearchResponse, SpotifyTrackFeaturesResponse):
     pass
+
+
+class RecommendedTrack(BaseModel):
+    id: str
+    similarity: float

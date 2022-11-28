@@ -28,13 +28,13 @@ class Recommender:
         self.scale()
 
     def prepare_track(self, track: Track):
-        track = pd.Series(track.dict())
-        track = track.drop(labels=["id", "name", "album", "artists"])
+        prepared_track = pd.Series(track.dict())
+        prepared_track = prepared_track.drop(labels=["id", "name", "album", "artists"])
 
         scaler = joblib.load("sc.joblib")
-        track = scaler.transform(track.values.reshape(1, -1))
+        prepared_track = scaler.transform(prepared_track.values.reshape(1, -1))
 
-        return track[0]
+        return prepared_track[0]
 
     def add_track_to_dataset(self, track: Track):
         if track.id not in self.dataset.index:
