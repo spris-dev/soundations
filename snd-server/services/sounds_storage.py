@@ -1,26 +1,33 @@
 import csv
+import pandas as pd
 
+from services.config import Config
 from models.track import Track
 
 
 class SoundsStorage:
-    def __init__(self, tracks_file, artists_file):
-        self.tracks_file = tracks_file
-        self.artists_file = artists_file
+    def __init__(self) -> None:
+        self.config = Config()
+        self.tracks_file = self.config.sounds_storage_path
+        self.artists_file = self.config.artists_storage_path
 
-    def write_headers(self):
+    def write_headers(self) -> None:
         open(self.artists_file, "w").close()
         with open(self.tracks_file, "w") as f:
             w = csv.DictWriter(f, fieldnames=Track.__fields__)
             w.writeheader()
 
-    def store_tracks(self, tracks):
+    def store_tracks(self, tracks) -> None:
         for track in tracks:
             with open(self.tracks_file, "a") as f:
                 w = csv.DictWriter(f, fieldnames=Track.__fields__)
                 w.writerow(track.dict())
 
-    def store_artist(self, artist_id: str):
+    def get_tracks(self) -> pd.DataFrame:
+        dataset = pd.read_csv(self.tracks_file)
+        return dataset
+
+    def store_artist(self, artist_id: str) -> None:
         with open(self.artists_file, "a") as f:
             w = csv.writer(f)
             w.writerow(
@@ -29,7 +36,7 @@ class SoundsStorage:
                 ]
             )
 
-    def get_artists(self):
+    def get_artists(self) -> set:
         artists_ids = set()
         with open(self.artists_file, "r") as f:
             reader = csv.reader(f)
