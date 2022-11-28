@@ -2,7 +2,8 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "snd-client/*": ["snd-client/src/*"]
+      "snd-client/*": ["snd-client/src/*"],
+      "snd-server-api-client/*": ["snd-server-api-client/*"],
     },
     "target": "ESNext",
     "useDefineForClassFields": true,

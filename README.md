@@ -26,3 +26,17 @@ cp .env.sample .env
 ```sh
 ./bin/start-server.sh
 ```
+
+### Start client in development mode
+
+```sh
+./bin/start-client.sh
+```
+
+### Generate server API client
+
+After making changes in `snd-server` http/api endpoints, we need to also regenerate API client library:
+
+```sh
+./bin/build-server-api-client.sh
+```
