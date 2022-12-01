@@ -6,6 +6,7 @@ from result import Ok, Err, Result
 from typing import TypeVar, List
 
 from services.config import Config
+from context import Context
 from services.sounds_storage import SoundsStorage
 from models.track import (
     Track,
@@ -24,11 +25,15 @@ T = TypeVar("T")
 
 
 class SpotifyCrawler:
-    def __init__(self, resume: bool):
+    def __init__(self, ctx: Context, resume: bool):
+        self.config = ctx.config
         self.resume = resume
-        self.config = Config()
-        self.spotify_token = ""
 
+        self.sounds_storage = SoundsStorage(
+            self.config.sounds_storage_path, self.config.artists_storage_path
+        )
+
+        self.spotify_token = ""
         self.token_url = "https://accounts.spotify.com/api/token"
         self.track_by_genre_url = "https://api.spotify.com/v1/search?q=genre%3A{genre}&type=track&limit={limit}&offset={offset}"
         self.artist_by_genre_url = "https://api.spotify.com/v1/search?q=genre%3A{genre}&type=artist&limit={limit}&offset={offset}"
@@ -177,9 +182,6 @@ class SpotifyCrawler:
             return Err("Failed to parse track features")
 
     def store_dataset_by_genres(self, genres):
-        self.sounds_storage = SoundsStorage(
-            self.config.sounds_storage_path, self.config.artists_storage_path
-        )
         if self.resume:
             self.artists_ids = self.sounds_storage.get_artists()
         else:
@@ -209,7 +211,9 @@ def main():
     )
     args = parser.parse_args()
 
-    spotify_crawler = SpotifyCrawler(args.resume)
+    config = Context.config
+
+    spotify_crawler = SpotifyCrawler(config, args.resume)
     spotify_crawler.set_access_token()
 
     your_metal = [
