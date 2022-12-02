@@ -69,6 +69,11 @@ jobs:
       run: ./bin/docker-run.sh ./bin/lint.sh
 
 
+    # Run unit tests
+    - name: Run unit tests
+      run: ./bin/docker-run.sh ./bin/test.sh
+
+
     # Build client static assets
     - name: Build client
       run: ./bin/docker-run.sh ./bin/build-client.sh
