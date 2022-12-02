@@ -8,13 +8,13 @@
     "url": "git+https://github.com/spris-dev/soundations.git"
   },
   "dependencies": {
-    "@preact/signals": "^1.1.2",
-    "lodash-es": "^4.17.21",
+    "@preact/signals": "1.1.2",
+    "lodash-es": "4.17.21",
     "preact": "10.11.2"
   },
   "devDependencies": {
     "@preact/preset-vite": "2.4.0",
-    "@types/lodash-es": "^4.17.6",
+    "@types/lodash-es": "4.17.6",
     "@types/node": "18.11.9",
     "@typescript-eslint/eslint-plugin": "5.44.0",
     "@typescript-eslint/parser": "5.44.0",
@@ -32,7 +32,8 @@
     "pyright": "1.1.275",
     "tailwindcss": "3.2.4",
     "typescript": "4.9.3",
-    "vite": "3.2.3"
+    "vite": "3.2.3",
+    "vitest": "0.25.3"
   },
   "scripts": {
     "prepare": "husky install",
@@ -40,6 +41,7 @@
     "client:dev": "vite snd-client",
     "client:build": "tsc -p snd-client && vite build snd-client",
     "client:preview": "vite preview snd-client",
+    "client:test": "vitest --root snd-client --run",
     "client:lint": "eslint --max-warnings 0 './snd-client'",
     "client:lint:fix": "eslint --fix --max-warnings 0"
   },
