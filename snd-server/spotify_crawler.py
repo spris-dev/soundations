@@ -1,11 +1,10 @@
-import argparse
 import requests
 import time
 
 from result import Ok, Err, Result
 from typing import TypeVar, List
 
-from services.config import Config
+from context import Context
 from services.sounds_storage import SoundsStorage
 from models.track import (
     Track,
@@ -24,11 +23,13 @@ T = TypeVar("T")
 
 
 class SpotifyCrawler:
-    def __init__(self, resume: bool):
+    def __init__(self, ctx: Context, resume: bool):
+        self.config = ctx.config
         self.resume = resume
-        self.config = Config()
-        self.spotify_token = ""
 
+        self.sounds_storage = SoundsStorage(ctx)
+
+        self.spotify_token = ""
         self.token_url = "https://accounts.spotify.com/api/token"
         self.track_by_genre_url = "https://api.spotify.com/v1/search?q=genre%3A{genre}&type=track&limit={limit}&offset={offset}"
         self.artist_by_genre_url = "https://api.spotify.com/v1/search?q=genre%3A{genre}&type=artist&limit={limit}&offset={offset}"
@@ -177,74 +178,20 @@ class SpotifyCrawler:
             return Err("Failed to parse track features")
 
     def store_dataset_by_genres(self, genres):
-        self.sounds_storage = SoundsStorage()
         if self.resume:
             self.artists_ids = self.sounds_storage.get_artists()
-            print(self.artists_ids)
         else:
             self.sounds_storage.write_headers()
 
         for genre in genres:
-            print(genre)
             artists = self.fetch_artists_by_genre(genre)
-            print(artists)
 
             for artist in artists:
-                print(artist)
                 if artist.id in self.artists_ids:
-                    print("True")
                     continue
 
                 tracks = self.fetch_artist_tracks(artist)
-                print(len(tracks))
 
                 self.artists_ids.add(artist.id)
                 self.sounds_storage.store_tracks(tracks)
                 self.sounds_storage.store_artist(artist.id)
-
-
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-r",
-        "--resume",
-        action="store_true",
-        help="start crawling from the point where you stopped",
-    )
-    args = parser.parse_args()
-
-    spotify_crawler = SpotifyCrawler(args.resume)
-    spotify_crawler.set_access_token()
-
-    your_metal = [
-        "alt-rock",
-        "alternative",
-        "black-metal",
-        "death-metal",
-        "emo",
-        "grunge",
-        "hard-rock",
-        "hardcore",
-        "heavy-metal",
-        "j-rock",
-        "metal",
-        "metal-misc",
-        "metalcore",
-        "psych-rock",
-        "punk",
-        "punk-rock",
-        "rock",
-        "rock-n-roll",
-        "rockabilly",
-        "classical",
-        "hip-hop",
-        "indie-pop",
-        "drum-and-bass",
-        "indie-pop",
-    ]
-
-    spotify_crawler.store_dataset_by_genres(your_metal)
-
-
-if __name__ == "__main__":
-    main()

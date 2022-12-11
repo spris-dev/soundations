@@ -1,49 +1,35 @@
 import joblib
+import zipfile
 import pandas as pd
 
 from typing import List
 from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.preprocessing import MinMaxScaler
 
 from models.track import Track, Album, Artist, RecommendedTrack
-from services.config import Config
-from services.sounds_storage import SoundsStorage
+from context import Context
+from app import create_ctx
 
 
 class Recommender:
-    def __init__(self) -> None:
-        self.config = Config()
-        self.storage = SoundsStorage()
-        self.dataset = pd.DataFrame()
+    def __init__(self, ctx: Context) -> None:
+        self.config = ctx.config
+        self.zf = zipfile.ZipFile(self.config.archive_storage_path, mode="r")
+        self.scaler = joblib.load(self.zf.open(self.config.scaler_storage_path))
+        self.dataset = pd.read_csv(
+            self.zf.open(self.config.transformed_sounds_storage_path), index_col=0
+        )
 
-    def scale(self) -> None:
-        scaler = MinMaxScaler()
-        self.dataset[:] = scaler.fit_transform(self.dataset.values)
-        joblib.dump(scaler, "sc.joblib")
-
-    def prepare_dataset(self) -> None:
-        self.dataset = self.storage.get_tracks()
-        self.dataset = self.dataset.drop(["name", "album", "artists"], axis=1)
-        self.dataset.set_index("id", inplace=True)
-        self.scale()
-
-    def prepare_track(self, track: Track):
+    def __prepare_track(self, track: Track):
         prepared_track = pd.Series(track.dict())
         prepared_track = prepared_track.drop(labels=["id", "name", "album", "artists"])
 
-        scaler = joblib.load("sc.joblib")
-        prepared_track = scaler.transform(prepared_track.values.reshape(1, -1))
+        prepared_track = self.scaler.transform(prepared_track.values.reshape(1, -1))
 
         return prepared_track[0]
 
-    def add_track_to_dataset(self, track: Track):
-        if track.id not in self.dataset.index:
-            prepared_track = self.prepare_track(track)
-            self.dataset.loc[track.id] = prepared_track
-
     def get_top_n(self, track: Track, n: int) -> List[RecommendedTrack]:
-        self.add_track_to_dataset(track)
-        prepared_track = self.prepare_track(track)
+        prepared_track = self.__prepare_track(track)
+        print(self.dataset)
 
         similarity = cosine_similarity(self.dataset, prepared_track.reshape(1, -1))[
             :, 0
@@ -61,6 +47,7 @@ class Recommender:
 
 
 def main():
+    ctx = create_ctx()
     album = Album(
         id="652N05EcNH1a4bIlUixQE2",
         name="Enema Of The State",
@@ -105,8 +92,7 @@ def main():
         artists=[artist],
     )
 
-    recommender = Recommender()
-    recommender.prepare_dataset()
+    recommender = Recommender(ctx)
     print(recommender.get_top_n(track, 10))
 
 

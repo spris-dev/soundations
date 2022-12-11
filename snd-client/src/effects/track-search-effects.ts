@@ -1,7 +1,10 @@
+import { debounce } from "lodash-es"
 import { effect } from "@preact/signals"
 
 import { createAppEffects } from "snd-client/effects/create-effects"
 import { OpStatus } from "snd-client/utils"
+
+const SEARCH_DEBOUNCE_MS = 500
 
 export const createTrackSearchEffects = createAppEffects((ctx) => {
   const {
@@ -16,8 +19,8 @@ export const createTrackSearchEffects = createAppEffects((ctx) => {
   }
 
   const subscribe = () => {
-    return effect(async () => {
-      if (searchTerm.value === "") {
+    const handleSearchTermChange = debounce(async (searchTermValue: string) => {
+      if (searchTermValue === "") {
         searchState.value = { status: OpStatus.IDLE }
         return
       }
@@ -26,7 +29,7 @@ export const createTrackSearchEffects = createAppEffects((ctx) => {
 
       try {
         const response = await soundationsApi.tracks.getTracks({
-          q: searchTerm.value,
+          q: searchTermValue,
           limit: 5,
         })
 
@@ -34,7 +37,9 @@ export const createTrackSearchEffects = createAppEffects((ctx) => {
       } catch (error) {
         searchState.value = { status: OpStatus.ERROR, error }
       }
-    })
+    }, SEARCH_DEBOUNCE_MS)
+
+    return effect(() => handleSearchTermChange(searchTerm.value))
   }
 
   return {

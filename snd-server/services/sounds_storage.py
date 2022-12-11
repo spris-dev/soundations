@@ -1,15 +1,14 @@
 import csv
 import pandas as pd
 
-from services.config import Config
+from context import Context
 from models.track import Track
 
 
 class SoundsStorage:
-    def __init__(self) -> None:
-        self.config = Config()
-        self.tracks_file = self.config.sounds_storage_path
-        self.artists_file = self.config.artists_storage_path
+    def __init__(self, ctx: Context) -> None:
+        self.tracks_file = ctx.config.sounds_storage_path
+        self.artists_file = ctx.config.artists_storage_path
 
     def write_headers(self) -> None:
         open(self.artists_file, "w").close()
