@@ -209,14 +209,6 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
-name = "joblib"
-version = "1.2.0"
-description = "Lightweight pipelining with Python functions"
-category = "main"
-optional = false
-python-versions = ">=3.7"
-
-[[package]]
 name = "mypy-extensions"
 version = "0.4.3"
 description = "Experimental type system extensions for programs checked with the mypy typechecker."
@@ -573,7 +565,7 @@ python-versions = ">=3.7"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "7d16f30ee4625f8fcf408770e7045793a2dbcaa0cfbb77b5f0b99449f5c73e32"
+content-hash = "f21b9945763a9d33253a3b15f34aab989130e496b8509fb55ec7ac72a9e8f13a"
 
 [metadata.files]
 aiosqlite = [
