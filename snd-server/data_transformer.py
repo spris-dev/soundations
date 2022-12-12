@@ -16,7 +16,6 @@ class Transformer:
         self.scaler = MinMaxScaler()
 
     def fit_transform(self) -> None:
-        self.scaler.get_feature_names_out
         self.dataset[:] = self.scaler.fit_transform(self.dataset.values)
 
     def drop(self) -> None:

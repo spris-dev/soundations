@@ -29,7 +29,6 @@ class Recommender:
 
     def get_top_n(self, track: Track, n: int) -> List[RecommendedTrack]:
         prepared_track = self.__prepare_track(track)
-        print(self.dataset)
 
         similarity = cosine_similarity(self.dataset, prepared_track.reshape(1, -1))[
             :, 0
