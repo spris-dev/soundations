@@ -187,7 +187,6 @@ class SpotifyCrawler:
             artists = self.fetch_artists_by_genre(genre)
 
             for artist in artists:
-                print(artist)
                 if artist.id in self.artists_ids:
                     continue
 
