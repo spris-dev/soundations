@@ -80,6 +80,7 @@ jobs:
 
 
     - name: Setup SSH Keys and known_hosts
+      if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         SND_MAIN_SERVER_KEY: ${{ secrets.SND_MAIN_SERVER_KEY }}
