@@ -19,10 +19,10 @@ export const TrackSearch: FunctionalComponent<TrackSearchProps> = () => {
   }, [])
 
   return (
-    <>
+    <div className="w-full h-full relative">
       <TrackSearchInput />
       <TrackSearchResults />
-    </>
+    </div>
   )
 }
 
@@ -101,6 +101,7 @@ export const TrackSearchResults: FunctionalComponent = () => {
         searchState: { value: search },
       },
     },
+    effects,
   } = useAppContext()
 
   return (
@@ -111,14 +112,22 @@ export const TrackSearchResults: FunctionalComponent = () => {
             return null
           case OpStatus.LOADING:
             return search.result ? (
-              <TrackSearchResultsView tracks={search.result} />
+              <TrackSearchResultsView
+                tracks={search.result}
+                onTrackSelect={effects.trackRecommendations.setSelectedTrack}
+              />
             ) : (
               <div>Loading...</div>
             )
           case OpStatus.ERROR:
             return <div>{JSON.stringify(search.error)}</div>
           case OpStatus.OK:
-            return <TrackSearchResultsView tracks={search.result} />
+            return (
+              <TrackSearchResultsView
+                tracks={search.result}
+                onTrackSelect={effects.trackRecommendations.setSelectedTrack}
+              />
+            )
           default:
             return assertNever(search)
         }
@@ -129,18 +138,35 @@ export const TrackSearchResults: FunctionalComponent = () => {
 
 export const TrackSearchResultsView: FunctionalComponent<{
   tracks: SoundationsTrack[]
-}> = ({ tracks }) => {
+  onTrackSelect: (track: SoundationsTrack) => void
+}> = ({ tracks, onTrackSelect }) => {
   return (
-    <div>
+    <div className="absolute top-[100%] w-full pt-2 pb-2 shadow-md rounded-md border-2 border-color-primary border-t-0">
       {tracks.map((track) => (
-        <div className="flex">
-          <img src={track.album.images[0]?.url} className="w-32 h-32 p-8"></img>
-          <div className="p-8">
-            <div className="font-bold">{track.name}</div>
-            <div>
-              {track.album.name} - {track.album.release_date}
+        <div
+          className="flex items-center w-full h-20 p-2 pl-4 pr-4 border-b last:border-b-0 border-color-secondary-lessish focus:outline-none focus:bg-color-active-lessish"
+          tabIndex={0}
+          role="button"
+          onClick={() => onTrackSelect(track)}
+          onKeyDown={(event) =>
+            ["Enter", " "].includes(event.key) && onTrackSelect(track)
+          }
+          onMouseOver={(event) => {
+            event.target instanceof HTMLElement && event.target.focus()
+          }}
+        >
+          <img
+            src={track.album.images[0]?.url}
+            className="mr-2 h-full rounded-md border-solid border-2 border-color-primary"
+          />
+          <div className="">
+            <div className="font-bold text-lg">
+              {track.artists[0]?.name} - {track.name}
             </div>
-            <div>{track.artists[0]?.name}</div>
+            <div>
+              {track.album.name} (
+              {new Date(track.album.release_date).getUTCFullYear()})
+            </div>
           </div>
         </div>
       ))}
