@@ -12,7 +12,11 @@ module.exports = {
         color: {
           primary: colors.slate["900"],
           secondary: colors.slate["400"],
+          "secondary-lessish": colors.slate["200"],
+          "secondary-less": colors.slate["50"],
           active: colors.sky["500"],
+          "active-lessish": colors.sky["300"],
+          "active-less": colors.sky["100"],
         },
       },
     },
