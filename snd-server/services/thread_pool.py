@@ -18,6 +18,6 @@ class ThreadPool:
         self, func: Callable[P, T], *args: P.args, **kwargs: P.kwargs
     ) -> T:
         if kwargs:
-            func = functools.partial(func, **kwargs)
+            func = functools.partial(func, **kwargs)  # type: ignore
         async with self.max_threads_guard:
             return await to_thread.run_sync(func, *args)

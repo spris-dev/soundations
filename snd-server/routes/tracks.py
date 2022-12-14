@@ -1,7 +1,9 @@
 from fastapi import APIRouter, Query, HTTPException, Response
 from result import Ok, Err
 from pydantic import BaseModel
+from asyncio import gather
 
+from services.track_service import TrackServiceResult
 from context import Context
 from models.soundations import SoundationsTrack
 from models.track import RecommendedTrack
@@ -67,21 +69,29 @@ def create_tracks_router(ctx: Context):
         match result:
             case Ok(track):
                 recommendations = await ctx.thread_pool.run_async(
-                    ctx.recommender.get_top_n, track, 10
+                    ctx.recommender.get_top_n, track, limit
                 )
-                soundations_tracks = [
-                    await ctx.track_service.soundations_track_by_id(track.id)
-                    for track in recommendations
-                ]
+
+                soundations_tracks: list[
+                    TrackServiceResult[SoundationsTrack]
+                ] = await gather(
+                    *[
+                        ctx.track_service.soundations_track_by_id(track.id)
+                        for track in recommendations
+                    ]
+                )
 
                 return TracksRecommendationsResponse(
                     items=[
-                        TrackRecommendationsItem(track=i.value, recommendation=j)
-                        for i, j in zip(soundations_tracks, recommendations)
+                        TrackRecommendationsItem(track=t.unwrap(), recommendation=r)
+                        for t, r in zip(soundations_tracks, recommendations)
+                        if t.is_ok()
                     ],
                     limit=limit,
                     offset=offset,
-                    total=0,
+                    total=len(recommendations),
                 )
+            case Err(err):
+                raise HTTPException(status_code=err.http_code, detail=err.message)
 
     return router

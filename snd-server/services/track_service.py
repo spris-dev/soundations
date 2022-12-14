@@ -1,9 +1,15 @@
-from result import Ok, Err
+from typing import TypeVar
+from result import Result, Ok, Err
 
-from services.spotify_api import SpotifyApi, SPOTIFY_API_URL, SpotifyResult
+from services.spotify_api import SpotifyApi, SPOTIFY_API_URL
 from context import Context
+from models.error import SoundationsError
 from models.track import Track, SpotifyTrackSearchResponse, SpotifyTrackFeaturesResponse
 from models.soundations import SoundationsTrack
+
+
+TOk = TypeVar("TOk")
+TrackServiceResult = Result[TOk, SoundationsError]
 
 
 class TrackService:
@@ -11,7 +17,7 @@ class TrackService:
         self.ctx = ctx
         self.api = SpotifyApi(ctx)
 
-    async def create_track_model_by_id(self, id: str) -> SpotifyResult[Track]:
+    async def create_track_model_by_id(self, id: str) -> TrackServiceResult[Track]:
         track_search_url = f"{SPOTIFY_API_URL}/tracks/{id}"
         track_features_url = f"{SPOTIFY_API_URL}/audio-features/{id}"
 
@@ -60,9 +66,11 @@ class TrackService:
 
             return Ok(track)
 
-        return Err("Error while crawling Track model by id")
+        return Err(SoundationsError(424, "Somethings bad happened on Spotify side"))
 
-    async def soundations_track_by_id(self, id: str) -> SpotifyResult[Track]:
+    async def soundations_track_by_id(
+        self, id: str
+    ) -> TrackServiceResult[SoundationsTrack]:
         track_search_url = f"{SPOTIFY_API_URL}/tracks/{id}"
 
         track_search_result = await self.api.call_spotify_api(
@@ -88,4 +96,4 @@ class TrackService:
 
             return Ok(soundations_track)
 
-        return Err("Error while crawling SoundationsTrack model by id")
+        return Err(SoundationsError(424, "Somethings bad happened on Spotify side"))
