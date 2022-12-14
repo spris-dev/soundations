@@ -5,6 +5,9 @@ if TYPE_CHECKING:
     from services.sqlite_storage import SqliteStorage
     from services.config import Config
     from services.spotify_api import SpotifyApi
+    from services.thread_pool import ThreadPool
+    from services.track_service import TrackService
+    from recommendation_engine import Recommender
 
 
 class Context:
@@ -12,3 +15,6 @@ class Context:
     config: "Config"
     http_client: "AsyncClient"
     spotify_api: "SpotifyApi"
+    recommender: "Recommender"
+    track_service: "TrackService"
+    thread_pool: "ThreadPool"

@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from context import Context
 from models.soundations import SoundationsTrack
+from models.track import RecommendedTrack
 from mappers.soundations import create_track_from_spotify
 
 
@@ -14,8 +15,9 @@ class TracksSearchResponse(BaseModel):
     total: int
 
 
-class TrackRecommendationsItem(SoundationsTrack):
-    score: float
+class TrackRecommendationsItem(BaseModel):
+    track: SoundationsTrack
+    recommendation: RecommendedTrack
 
 
 class TracksRecommendationsResponse(BaseModel):
@@ -60,13 +62,26 @@ def create_tracks_router(ctx: Context):
         limit: int = Query(default=6, ge=1, le=10),
         offset: int = Query(default=0, ge=0, le=50),
     ) -> TracksRecommendationsResponse:
-        # TODO: add actual recommendations impl
+        result = await ctx.track_service.create_track_model_by_id(track_id)
 
-        return TracksRecommendationsResponse(
-            items=[],
-            limit=limit,
-            offset=offset,
-            total=0,
-        )
+        match result:
+            case Ok(track):
+                recommendations = await ctx.thread_pool.run_async(
+                    ctx.recommender.get_top_n, track, 10
+                )
+                soundations_tracks = [
+                    await ctx.track_service.soundations_track_by_id(track.id)
+                    for track in recommendations
+                ]
+
+                return TracksRecommendationsResponse(
+                    items=[
+                        TrackRecommendationsItem(track=i.value, recommendation=j)
+                        for i, j in zip(soundations_tracks, recommendations)
+                    ],
+                    limit=limit,
+                    offset=offset,
+                    total=0,
+                )
 
     return router
