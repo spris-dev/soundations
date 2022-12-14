@@ -12,6 +12,7 @@ from models.spotify import (
     SpotifyApiTrackSearchResponseTracks,
     SpotifyApiErrorResponse,
 )
+from models.track import Track, SpotifyTrackSearchResponse, SpotifyTrackFeaturesResponse
 
 logger = logging.getLogger(__name__)
 
@@ -41,6 +42,14 @@ class SpotifyApi:
         self, q: str, limit: int = 1, offset: int = 0
     ) -> SpotifyResult[SpotifyApiTrackSearchResponseTracks]:
         return await self.api.search_tracks(q=q, limit=limit, offset=offset)
+
+    async def call_spotify_api(
+        self,
+        call: Callable[[dict[str, str]], Awaitable[Response]],
+        model: TModel,
+        state: SpotifyApiCallState = default_spotify_api_call_state,
+    ) -> SpotifyResult[TModel]:
+        return await self.api.call_spotify_api(call=call, model=model, state=state)
 
 
 class SpotifyApiImpl:

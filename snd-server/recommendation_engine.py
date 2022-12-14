@@ -5,9 +5,8 @@ import pandas as pd
 from typing import List
 from sklearn.metrics.pairwise import cosine_similarity
 
-from models.track import Track, Album, Artist, RecommendedTrack
+from models.track import Track, RecommendedTrack
 from context import Context
-from app import create_ctx
 
 
 class Recommender:
@@ -37,63 +36,8 @@ class Recommender:
         recommends = recommends[recommends.id != track.id]
         recommends = recommends.sort_values("similarity", ascending=False).head(n)
 
-        # TO DO: get rid of iterating over DataFrame rows(considered to be an anti-pattern)
         result = []
         for _, row in recommends.iterrows():
             result.append(RecommendedTrack(id=row["id"], similarity=row["similarity"]))
 
         return result
-
-
-def main():
-    ctx = create_ctx()
-    album = Album(
-        id="652N05EcNH1a4bIlUixQE2",
-        name="Enema Of The State",
-        release_date="1999-06-01",
-        images=[
-            {
-                "height": 640,
-                "url": "https://i.scdn.co/image/ab67616d0000b2736da502e35a7a3e48de2b0f74",
-                "width": 640,
-            },
-            {
-                "height": 300,
-                "url": "https://i.scdn.co/image/ab67616d00001e026da502e35a7a3e48de2b0f74",
-                "width": 300,
-            },
-            {
-                "height": 64,
-                "url": "https://i.scdn.co/image/ab67616d000048516da502e35a7a3e48de2b0f74",
-                "width": 64,
-            },
-        ],
-    )
-    artist = Artist(id="6FBDaR13swtiWwGhX1WQsP", name="blink-182")
-    track = Track(
-        danceability=0.434,
-        energy=0.897,
-        key=0,
-        loudness=-4.918,
-        mode=1,
-        speechiness=0.0488,
-        acousticness=0.0103,
-        instrumentalness=0,
-        liveness=0.612,
-        valence=0.684,
-        tempo=148.726,
-        duration_ms=167067,
-        time_signature=4,
-        id="2m1hi0nfMR9vdGC8UcrnwU",
-        name="All The Small Things",
-        popularity=81,
-        album=album,
-        artists=[artist],
-    )
-
-    recommender = Recommender(ctx)
-    print(recommender.get_top_n(track, 10))
-
-
-if __name__ == "__main__":
-    main()

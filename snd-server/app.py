@@ -4,6 +4,9 @@ from fastapi import FastAPI
 from fastapi.routing import APIRoute
 
 from context import Context
+from recommendation_engine import Recommender
+from services.thread_pool import ThreadPool
+from services.track_service import TrackService
 from services.sqlite_storage import SqliteStorage
 from services.config import Config
 from services.spotify_api import SpotifyApi
@@ -18,6 +21,9 @@ def create_ctx() -> Context:
     ctx.config = Config()
     ctx.spotify_api = SpotifyApi(ctx)
     ctx.sqlite_storage = SqliteStorage(ctx)
+    ctx.recommender = Recommender(ctx)
+    ctx.thread_pool = ThreadPool()
+    ctx.track_service = TrackService(ctx)
 
     return ctx
 

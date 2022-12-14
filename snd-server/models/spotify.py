@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 
 class SpotifyApiImage(BaseModel):
@@ -27,7 +27,7 @@ class SpotifyApiTrack(BaseModel):
     artists: List[SpotifyApiArtist]
     duration_ms: int
     href: str
-    preview_url: str
+    preview_url: Optional[str] = None
 
 
 class SpotifyApiTrackSearchResponseTracks(BaseModel):
