@@ -10,6 +10,7 @@ export const createTrackSearchEffects = createAppEffects((ctx) => {
   const {
     state: {
       trackSearch: { searchTerm, searchState },
+      recommendations: { recommendationsState },
     },
     services: { soundationsApi },
   } = ctx
@@ -22,6 +23,7 @@ export const createTrackSearchEffects = createAppEffects((ctx) => {
     const handleSearchTermChange = debounce(async (searchTermValue: string) => {
       if (searchTermValue === "") {
         searchState.value = { status: OpStatus.IDLE }
+        recommendationsState.value = { status: OpStatus.IDLE }
         return
       }
 

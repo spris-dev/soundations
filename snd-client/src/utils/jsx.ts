@@ -1,6 +1,6 @@
 import type { VNode } from "preact"
 
-type Rndr = <T extends VNode | null>(cb: (utils: RndrUtils) => T) => T
+type Rndr = <T extends VNode[] | VNode | null>(cb: (utils: RndrUtils) => T) => T
 export const rndr: Rndr = (cb) => {
   return cb(rndrUtils)
 }

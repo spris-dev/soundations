@@ -29,7 +29,7 @@ export const Input: FunctionalComponent<InputProps> = ({
   )
 
   return (
-    <div className="flex relative w-full h-full font-bold text-lg shadow-md rounded-md border-2 border-color-primary focus-within:border-color-active">
+    <div className="flex relative w-full h-full font-bold text-lg shadow-md rounded-md border-2 border-color-primary focus-within:border-color-active bg-color-background">
       {icon && (
         <div className="shrink-0 grow h-full flex items-center ml-2 mr-2">
           {cloneElement(icon, {
@@ -43,7 +43,7 @@ export const Input: FunctionalComponent<InputProps> = ({
         onInput={handleInput}
         placeholder={placeholder}
         type="text"
-        className="shrink w-full h-full block placeholder:italic focus:outline-none rounded-md"
+        className="shrink w-full h-full block placeholder:italic focus:outline-none rounded-md bg-color-background"
       />
     </div>
   )

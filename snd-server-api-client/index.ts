@@ -10,6 +10,7 @@ export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
 export type { HTTPValidationError } from './models/HTTPValidationError';
+export type { RecommendedTrack } from './models/RecommendedTrack';
 export type { SoundationsTrack } from './models/SoundationsTrack';
 export type { SpotifyApiAlbum } from './models/SpotifyApiAlbum';
 export type { SpotifyApiArtist } from './models/SpotifyApiArtist';

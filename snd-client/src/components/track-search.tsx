@@ -19,7 +19,7 @@ export const TrackSearch: FunctionalComponent<TrackSearchProps> = () => {
   }, [])
 
   return (
-    <div className="w-full h-full relative">
+    <div className="w-full h-full relative z-10 bg-color-background">
       <TrackSearchInput />
       <TrackSearchResults />
     </div>
@@ -141,7 +141,7 @@ export const TrackSearchResultsView: FunctionalComponent<{
   onTrackSelect: (track: SoundationsTrack) => void
 }> = ({ tracks, onTrackSelect }) => {
   return (
-    <div className="absolute top-[100%] w-full pt-2 pb-2 shadow-md rounded-md border-2 border-color-primary border-t-0">
+    <div className="absolute top-[100%] w-full pt-2 pb-2 shadow-md rounded-md border-2 border-color-primary border-t-0 bg-color-background">
       {tracks.map((track) => (
         <div
           className="flex items-center w-full h-20 p-2 pl-4 pr-4 border-b last:border-b-0 border-color-secondary-lessish focus:outline-none focus:bg-color-active-lessish"
