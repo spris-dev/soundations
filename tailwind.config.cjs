@@ -17,6 +17,7 @@ module.exports = {
           active: colors.sky["500"],
           "active-lessish": colors.sky["300"],
           "active-less": colors.sky["100"],
+          background: colors.neutral["50"],
         },
       },
     },
