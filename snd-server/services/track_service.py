@@ -3,6 +3,7 @@ from typing import TypeVar
 from result import Result, Ok, Err
 
 from services.spotify_api import SpotifyApi
+from services.spotify_api import SpotifyApi
 from context import Context
 from models.error import SoundationsError
 from models.soundations import (
@@ -74,5 +75,7 @@ class TrackService:
                 )
                 return Ok(soundations_track)
 
+            case Err(err):
+                raise HTTPException(status_code=err.http_code, detail=err.message)
             case Err(err):
                 raise HTTPException(status_code=err.http_code, detail=err.message)
