@@ -6,6 +6,7 @@ def create_track_from_spotify(track: SpotifyApiTrack) -> SoundationsTrack:
     return SoundationsTrack(
         id=track.id,
         name=track.name,
+        popularity=track.popularity,
         album=track.album,
         artists=track.artists,
         duration_ms=track.duration_ms,
