@@ -1,7 +1,7 @@
 import logging
 import anyio
 from pydantic import BaseModel
-from typing import Callable, TypeVar, Awaitable, TypedDict
+from typing import Callable, TypeVar, Awaitable, TypedDict, Type
 from result import Ok, Err, Result
 from httpx import Response
 
@@ -9,10 +9,11 @@ from context import Context
 from models.error import SoundationsError
 from models.spotify import (
     SpotifyApiTrackSearchResponse,
+    SpotifyApiTrack,
     SpotifyApiTrackSearchResponseTracks,
     SpotifyApiErrorResponse,
+    SpotifyApiTrackFeaturesResponse,
 )
-from models.track import Track, SpotifyTrackSearchResponse, SpotifyTrackFeaturesResponse
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_URL = "https://api.spotify.com/v1"
 
 
-TModel = TypeVar("TModel", bound=type(BaseModel))
+TModel = TypeVar("TModel", bound=BaseModel)
 TOk = TypeVar("TOk")
 SpotifyResult = Result[TOk, SoundationsError]
 
@@ -43,13 +44,13 @@ class SpotifyApi:
     ) -> SpotifyResult[SpotifyApiTrackSearchResponseTracks]:
         return await self.api.search_tracks(q=q, limit=limit, offset=offset)
 
-    async def call_spotify_api(
-        self,
-        call: Callable[[dict[str, str]], Awaitable[Response]],
-        model: TModel,
-        state: SpotifyApiCallState = default_spotify_api_call_state,
-    ) -> SpotifyResult[TModel]:
-        return await self.api.call_spotify_api(call=call, model=model, state=state)
+    async def get_track(self, track_id: str) -> SpotifyResult[SpotifyApiTrack]:
+        return await self.api.get_track(track_id=track_id)
+
+    async def get_track_features(
+        self, track_id: str
+    ) -> SpotifyResult[SpotifyApiTrackFeaturesResponse]:
+        return await self.api.get_track_features(track_id=track_id)
 
 
 class SpotifyApiImpl:
@@ -76,10 +77,10 @@ class SpotifyApiImpl:
         except Exception as err:
             logger.exception(f"Failed to fetch spotify access token: {str(err)}")
 
-    async def call_spotify_api(
+    async def __call_spotify_api(
         self,
         call: Callable[[dict[str, str]], Awaitable[Response]],
-        model: TModel,
+        model: Type[TModel],
         state: SpotifyApiCallState = default_spotify_api_call_state,
     ) -> SpotifyResult[TModel]:
         if self.access_token is None:
@@ -101,14 +102,14 @@ class SpotifyApiImpl:
 
             if response.status_code == 401:
                 await self.refresh_access_token()
-                return await self.call_spotify_api(call, model)
+                return await self.__call_spotify_api(call, model)
 
             if response.status_code in [429, 503]:
                 backoff_secs = response.headers.get(
                     "retry-after", DEFAULT_BACKOFF_SECS * retry_attempt
                 )
                 await anyio.sleep(float(backoff_secs))
-                return await self.call_spotify_api(
+                return await self.__call_spotify_api(
                     call, model, {"retry_attempt": retry_attempt + 1}
                 )
 
@@ -138,7 +139,7 @@ class SpotifyApiImpl:
     ) -> SpotifyResult[SpotifyApiTrackSearchResponseTracks]:
         url = f"{SPOTIFY_API_URL}/search?type=track&q={q}&limit={limit}&offset={offset}"
 
-        result = await self.call_spotify_api(
+        result = await self.__call_spotify_api(
             lambda headers: self.ctx.http_client.get(
                 url=url,
                 headers=headers,
@@ -147,3 +148,31 @@ class SpotifyApiImpl:
         )
 
         return result.map(lambda resp: resp.tracks)
+
+    async def get_track(self, track_id: str) -> SpotifyResult[SpotifyApiTrack]:
+        url = f"{SPOTIFY_API_URL}/tracks/{track_id}"
+
+        result = await self.__call_spotify_api(
+            lambda headers: self.ctx.http_client.get(
+                url=url,
+                headers=headers,
+            ),
+            model=SpotifyApiTrack,
+        )
+
+        return result
+
+    async def get_track_features(
+        self, track_id: str
+    ) -> SpotifyResult[SpotifyApiTrackFeaturesResponse]:
+        url = f"{SPOTIFY_API_URL}/audio-features/{track_id}"
+
+        result = await self.__call_spotify_api(
+            lambda headers: self.ctx.http_client.get(
+                url=url,
+                headers=headers,
+            ),
+            model=SpotifyApiTrackFeaturesResponse,
+        )
+
+        return result

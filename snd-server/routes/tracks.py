@@ -5,9 +5,11 @@ from asyncio import gather
 
 from services.track_service import TrackServiceResult
 from context import Context
-from models.soundations import SoundationsTrack
-from models.track import RecommendedTrack
 from mappers.soundations import create_track_from_spotify
+from models.soundations import (
+    SoundationsTrack,
+    RecommendedTrack,
+)
 
 
 class TracksSearchResponse(BaseModel):

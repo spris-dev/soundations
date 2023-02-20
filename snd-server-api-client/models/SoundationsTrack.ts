@@ -10,6 +10,7 @@ export type SoundationsTrack = {
     name: string;
     album: SpotifyApiAlbum;
     artists: Array<SpotifyApiArtist>;
+    popularity: number;
     duration_ms: number;
     href: string;
     preview_url?: string;
