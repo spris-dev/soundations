@@ -54,8 +54,30 @@ class SpotifyApiTrackSearchResponseTracks(BaseModel):
     total: int
 
 
+class SpotifyApiAlbumSearchResponseAlbums(BaseModel):
+    items: List[SpotifyApiAlbum]
+    limit: int
+    offset: int
+    total: int
+
+
+class SpotifyApiArtistSearchResponseArtists(BaseModel):
+    items: List[SpotifyApiArtist]
+    limit: int
+    offset: int
+    total: int
+
+
+class SpotifyApiAlbumSearchResponse(BaseModel):
+    albums: SpotifyApiAlbumSearchResponseAlbums
+
+
 class SpotifyApiTrackSearchResponse(BaseModel):
     tracks: SpotifyApiTrackSearchResponseTracks
+
+
+class SpotifyApiArtistSearchResponse(BaseModel):
+    artists: SpotifyApiArtistSearchResponseArtists
 
 
 class SpotifyApiError(BaseModel):

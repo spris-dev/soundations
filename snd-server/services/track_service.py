@@ -5,8 +5,10 @@ from result import Result, Ok, Err
 from services.spotify_api import SpotifyApi
 from context import Context
 from models.error import SoundationsError
-from models.track import Track
-from models.soundations import SoundationsTrack
+from models.soundations import (
+    SoundationsTrack,
+    SoundationsTrackWithFeatures,
+)
 
 
 TOk = TypeVar("TOk")
@@ -14,11 +16,13 @@ TrackServiceResult = Result[TOk, SoundationsError]
 
 
 class TrackService:
-    def __init__(self, ctx: Context):
+    def __init__(self, ctx: Context) -> None:
         self.ctx = ctx
         self.api = SpotifyApi(ctx)
 
-    async def create_track_model_by_id(self, id: str) -> TrackServiceResult[Track]:
+    async def create_track_model_by_id(
+        self, id: str
+    ) -> TrackServiceResult[SoundationsTrackWithFeatures]:
         track_search_result = await self.api.get_track(id)
         track_features_result = await self.api.get_track_features(id)
 
@@ -28,11 +32,9 @@ class TrackService:
             track_search_result = track_search_result.value
             track_features_result = track_features_result.value
 
-            track = Track(
+            track = SoundationsTrackWithFeatures(
                 id=track_search_result.id,
-                name=track_search_result.name,
                 popularity=track_search_result.popularity,
-                album=track_search_result.album,
                 artists=track_search_result.artists,
                 danceability=track_features_result.danceability,
                 energy=track_features_result.energy,

@@ -6,18 +6,19 @@ from typing import TypeVar, List
 
 from context import Context
 from services.sounds_storage import SoundsStorage
-from models.track import (
-    Track,
-    Artist,
-    Album,
-    SpotifyAlbumSearchResponseList,
-    SpotifyArtistSearchResponseList,
-    SpotifyAlbumSearchResponseList,
-    SpotifyArtistSearchResponseList,
-    SpotifyTrackFeaturesResponse,
-    SpotifyTrackSearchResponseList,
+
+from models.spotify import (
+    SpotifyApiArtist,
+    SpotifyApiAlbum,
+    SpotifyApiAlbumSearchResponse,
+    SpotifyApiArtistSearchResponse,
+    SpotifyApiTrackFeaturesResponse,
 )
 
+from models.soundations import (
+    SoundationsRawTrackResponse,
+    SoundationsTrackWithFeatures,
+)
 
 T = TypeVar("T")
 
@@ -85,28 +86,31 @@ class SpotifyCrawler:
         except:
             return Err("Error while parsing in request")
 
-    def fetch_artists_by_genre(self, genre: str) -> List[Artist]:
+    def fetch_artists_by_genre(self, genre: str) -> List[SpotifyApiArtist]:
         artists = []
         for i in range(0, self.config.items_per_search, self.config.spotify_limit):
             url = self.artist_by_genre_url.format(
                 genre=genre, limit=self.config.spotify_limit, offset=i
             )
-            artists_response = self.request(url, SpotifyArtistSearchResponseList)
+            artists_response = self.request(url, SpotifyApiArtistSearchResponse)
+
             if isinstance(artists_response, Ok):
-                artists.extend(artists_response.value.artists)
+                artists.extend(artists_response.value.artists.items)
 
         return artists
 
-    def fetch_artist_tracks(self, artist: Artist) -> List[Track]:
+    def fetch_artist_tracks(
+        self, artist: SpotifyApiArtist
+    ) -> List[SoundationsTrackWithFeatures]:
         tracks = []
         for i in range(0, self.config.items_per_search, self.config.spotify_limit):
             url = self.artists_tracks_url.format(
                 name=artist.name, limit=self.config.spotify_limit, offset=i
             )
-            tracks_general = self.request(url, SpotifyTrackSearchResponseList)
+            tracks_general = self.request(url, SoundationsRawTrackResponse)
 
             if isinstance(tracks_general, Ok):
-                tracks_general = tracks_general.value.tracks
+                tracks_general = tracks_general.value.tracks.items
                 for track in tracks_general:
                     correct_artist = False
                     for a in track.artists:
@@ -122,30 +126,32 @@ class SpotifyCrawler:
                         try:
                             track = track.dict()
                             track.update(extra_features.value.dict())
-                            tracks.append(Track.parse_obj(track))
+                            tracks.append(SoundationsTrackWithFeatures.parse_obj(track))
                         except:
                             print("Error while parsing track")
 
         return tracks
 
-    def fetch_albums_by_artist(self, artist: Artist) -> Result[List[Album], str]:
+    def fetch_albums_by_artist(
+        self, artist: SpotifyApiArtist
+    ) -> Result[List[SpotifyApiAlbum], str]:
         artist_id = artist.id
 
         url = self.artists_album_url.format(id=artist_id, limit=10, offset=0)
-        albums = self.request(url, SpotifyAlbumSearchResponseList)
+        albums = self.request(url, SpotifyApiAlbumSearchResponse)
 
         if isinstance(albums, Ok):
             return Ok(albums.value.albums)
         else:
             return Err("Error while parsing album")
 
-    def fetch_tracks_by_genre(self, genre: str) -> List[Track]:
+    def fetch_tracks_by_genre(self, genre: str) -> List[SoundationsTrackWithFeatures]:
         tracks = []
         for i in range(0, self.config.items_per_search, self.config.spotify_limit):
             url = self.track_by_genre_url.format(
                 genre=genre, limit=self.config.spotify_limit, offset=i
             )
-            tracks_general = self.request(url, SpotifyTrackSearchResponseList)
+            tracks_general = self.request(url, SoundationsRawTrackResponse)
 
             if isinstance(tracks_general, Ok):
                 tracks_general = tracks_general.value.tracks
@@ -156,7 +162,7 @@ class SpotifyCrawler:
                         try:
                             track = track.dict()
                             track.update(extra_features.value.dict())
-                            tracks.append(Track.parse_obj(track))
+                            tracks.append(SoundationsTrackWithFeatures.parse_obj(track))
                         except:
                             print("Error while parsing track")
 
@@ -164,13 +170,13 @@ class SpotifyCrawler:
 
     def fetch_track_features(
         self, track_id
-    ) -> Result[SpotifyTrackFeaturesResponse, str]:
+    ) -> Result[SpotifyApiTrackFeaturesResponse, str]:
         url = self.track_features_url
 
         try:
-            response = SpotifyTrackFeaturesResponse.parse_obj(
+            response = SpotifyApiTrackFeaturesResponse.parse_obj(
                 self.request(
-                    url.format(id=track_id), SpotifyTrackFeaturesResponse
+                    url.format(id=track_id), SpotifyApiTrackFeaturesResponse
                 ).value
             )
             return Ok(response)
