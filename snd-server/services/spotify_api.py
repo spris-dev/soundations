@@ -1,7 +1,7 @@
 import logging
 import anyio
 from pydantic import BaseModel
-from typing import Callable, TypeVar, Awaitable, TypedDict
+from typing import Callable, TypeVar, Awaitable, TypedDict, Type
 from result import Ok, Err, Result
 from httpx import Response
 
@@ -23,7 +23,7 @@ SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_URL = "https://api.spotify.com/v1"
 
 
-TModel = TypeVar("TModel", bound=type(BaseModel))
+TModel = TypeVar("TModel", bound=BaseModel)
 TOk = TypeVar("TOk")
 SpotifyResult = Result[TOk, SoundationsError]
 
@@ -80,7 +80,7 @@ class SpotifyApiImpl:
     async def __call_spotify_api(
         self,
         call: Callable[[dict[str, str]], Awaitable[Response]],
-        model: TModel,
+        model: Type[TModel],
         state: SpotifyApiCallState = default_spotify_api_call_state,
     ) -> SpotifyResult[TModel]:
         if self.access_token is None:
