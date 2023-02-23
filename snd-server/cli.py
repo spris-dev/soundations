@@ -66,7 +66,6 @@ def generate_open_api(args: argparse.Namespace):
 
 def crawl_tracks(args: argparse.Namespace):
     spotify_crawler = SpotifyCrawler(ctx, args.resume)
-    spotify_crawler.set_access_token()
 
     genres = [
         "alt-rock",
@@ -95,7 +94,7 @@ def crawl_tracks(args: argparse.Namespace):
         "indie-pop",
     ]
 
-    spotify_crawler.store_dataset_by_genres(genres)
+    spotify_crawler.fetch_tracks_by_genres(genres)
 
 
 def transform():
