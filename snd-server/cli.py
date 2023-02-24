@@ -2,8 +2,8 @@ import argparse
 import json
 from fastapi.openapi.utils import get_openapi
 
-from spotify_crawler import SpotifyCrawler
-from data_transformer import Transformer
+from spotify_crawler import crawl_tracks_by_genres
+from data_transformer import transform
 from app import create_ctx, create_app
 
 ctx = create_ctx()
@@ -47,7 +47,7 @@ def main():
         case "crawl-tracks":
             crawl_tracks(args)
         case "transform-dataset":
-            transform()
+            transform(ctx)
 
 
 def generate_open_api(args: argparse.Namespace):
@@ -65,8 +65,6 @@ def generate_open_api(args: argparse.Namespace):
 
 
 def crawl_tracks(args: argparse.Namespace):
-    spotify_crawler = SpotifyCrawler(ctx, args.resume)
-
     genres = [
         "alt-rock",
         "alternative",
@@ -94,15 +92,7 @@ def crawl_tracks(args: argparse.Namespace):
         "indie-pop",
     ]
 
-    spotify_crawler.fetch_tracks_by_genres(genres)
-
-
-def transform():
-    transformer = Transformer(ctx)
-
-    transformer.drop()
-    transformer.fit_transform()
-    transformer.save()
+    crawl_tracks_by_genres(ctx, args.resume, genres)
 
 
 if __name__ == "__main__":

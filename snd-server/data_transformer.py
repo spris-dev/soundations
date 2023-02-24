@@ -1,5 +1,4 @@
 import joblib
-import pandas as pd
 import zipfile
 
 from result import Ok, Err, Result
@@ -7,6 +6,14 @@ from sklearn.preprocessing import MinMaxScaler
 
 from context import Context
 from services.sounds_storage import SoundsStorage
+
+
+def transform(ctx: Context) -> None:
+    transformer = Transformer(ctx)
+
+    transformer.drop()
+    transformer.fit_transform()
+    transformer.save()
 
 
 class Transformer:

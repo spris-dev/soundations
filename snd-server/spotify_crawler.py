@@ -18,6 +18,12 @@ from models.soundations import SoundationsTrackWithFeatures
 T = TypeVar("T")
 
 
+def crawl_tracks_by_genres(ctx: Context, resume: bool, genres) -> None:
+    spotify_crawler = SpotifyCrawler(ctx, resume)
+
+    spotify_crawler.fetch_tracks_by_genres(genres)
+
+
 class SpotifyCrawler:
     def __init__(self, ctx: Context, resume: bool) -> None:
         self.ctx = ctx
