@@ -1,4 +1,3 @@
-from fastapi import HTTPException
 from typing import TypeVar
 from result import Result, Ok, Err
 
@@ -75,4 +74,8 @@ class TrackService:
                 return Ok(soundations_track)
 
             case Err(err):
-                raise HTTPException(status_code=err.http_code, detail=err.message)
+                return Err(
+                    SoundationsError(
+                        424, f"Somethings bad happened on Spotify side: {str(err)}"
+                    )
+                )

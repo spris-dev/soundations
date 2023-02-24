@@ -10,9 +10,11 @@ from models.error import SoundationsError
 from models.spotify import (
     SpotifyApiTrackSearchResponse,
     SpotifyApiTrack,
+    SpotifyApiArtist,
     SpotifyApiTrackSearchResponseTracks,
     SpotifyApiErrorResponse,
     SpotifyApiTrackFeaturesResponse,
+    SpotifyApiArtistSearchResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -51,6 +53,20 @@ class SpotifyApi:
         self, track_id: str
     ) -> SpotifyResult[SpotifyApiTrackFeaturesResponse]:
         return await self.api.get_track_features(track_id=track_id)
+
+    async def search_artists_by_genre(
+        self, genre: str, limit: int = 1, offset: int = 0
+    ) -> SpotifyResult[SpotifyApiArtistSearchResponse]:
+        return await self.api.search_artists_by_genre(
+            genre=genre, limit=limit, offset=offset
+        )
+
+    async def search_tracks_by_artist(
+        self, artist: SpotifyApiArtist, limit: int = 1, offset: int = 0
+    ) -> SpotifyResult[SpotifyApiTrackSearchResponseTracks]:
+        return await self.api.search_tracks_by_artist(
+            artist=artist, limit=limit, offset=offset
+        )
 
 
 class SpotifyApiImpl:
@@ -176,3 +192,33 @@ class SpotifyApiImpl:
         )
 
         return result
+
+    async def search_artists_by_genre(
+        self, genre: str, limit: int = 1, offset: int = 0
+    ) -> SpotifyResult[SpotifyApiArtistSearchResponse]:
+        url = f"{SPOTIFY_API_URL}/search?q=genre%3A{genre}&type=artist&limit={limit}&offset={offset}"
+
+        result = await self.__call_spotify_api(
+            lambda headers: self.ctx.http_client.get(
+                url=url,
+                headers=headers,
+            ),
+            model=SpotifyApiArtistSearchResponse,
+        )
+
+        return result
+
+    async def search_tracks_by_artist(
+        self, artist: SpotifyApiArtist, limit: int = 1, offset: int = 0
+    ) -> SpotifyResult[SpotifyApiTrackSearchResponseTracks]:
+        url = f"{SPOTIFY_API_URL}/search?q=artist='{artist.name}'&type=track&limit={limit}&offset={offset}"
+
+        result = await self.__call_spotify_api(
+            lambda headers: self.ctx.http_client.get(
+                url=url,
+                headers=headers,
+            ),
+            model=SpotifyApiTrackSearchResponse,
+        )
+
+        return result.map(lambda resp: resp.tracks)

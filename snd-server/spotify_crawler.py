@@ -1,203 +1,155 @@
-import requests
-import time
+import asyncio
 
 from result import Ok, Err, Result
 from typing import TypeVar, List
 
 from context import Context
 from services.sounds_storage import SoundsStorage
+from models.error import SoundationsError
 
 from models.spotify import (
     SpotifyApiArtist,
-    SpotifyApiAlbum,
-    SpotifyApiAlbumSearchResponse,
-    SpotifyApiArtistSearchResponse,
     SpotifyApiTrackFeaturesResponse,
 )
 
-from models.soundations import (
-    SoundationsRawTrackResponse,
-    SoundationsTrackWithFeatures,
-)
+from models.soundations import SoundationsTrackWithFeatures
+
 
 T = TypeVar("T")
 
 
+def crawl_tracks_by_genres(ctx: Context, resume: bool, genres) -> None:
+    spotify_crawler = SpotifyCrawler(ctx, resume)
+
+    spotify_crawler.fetch_tracks_by_genres(genres)
+
+
 class SpotifyCrawler:
-    def __init__(self, ctx: Context, resume: bool):
-        self.config = ctx.config
+    def __init__(self, ctx: Context, resume: bool) -> None:
+        self.ctx = ctx
         self.resume = resume
 
         self.sounds_storage = SoundsStorage(ctx)
-
-        self.spotify_token = ""
-        self.token_url = "https://accounts.spotify.com/api/token"
-        self.track_by_genre_url = "https://api.spotify.com/v1/search?q=genre%3A{genre}&type=track&limit={limit}&offset={offset}"
-        self.artist_by_genre_url = "https://api.spotify.com/v1/search?q=genre%3A{genre}&type=artist&limit={limit}&offset={offset}"
-        self.track_features_url = "https://api.spotify.com/v1/audio-features/{id}"
-        self.artists_album_url = "https://api.spotify.com/v1/artists/{id}/albums?q=include_groups=album&limit={limit}&offset={offset}"
-        self.artists_tracks_url = "https://api.spotify.com/v1/search?q=artist%3A'{name}'&type=track&limit={limit}&offset={offset}"
-
         self.artists_ids = set()
 
-    def set_access_token(self):
-        response = requests.post(
-            self.token_url,
-            data={"grant_type": "client_credentials"},
-            auth=(self.config.spotify_client_id, self.config.spotify_client_secret),
+    async def __fetch_artists_by_genre(
+        self, genre: str
+    ) -> Result[List[SpotifyApiArtist], SoundationsError]:
+        spotify_artists: list[SpotifyApiArtist] = []
+        for i in range(
+            0, self.ctx.config.items_per_search, self.ctx.config.spotify_limit
+        ):
+            artists_search_result = await self.ctx.spotify_api.search_artists_by_genre(
+                genre, self.ctx.config.spotify_limit, i
+            )
+
+            match artists_search_result:
+                case Ok(result):
+                    spotify_artists.extend(result.artists.items)
+
+                case Err(err):
+                    return Err(
+                        SoundationsError(
+                            404, f"Failed to fetch artists from Spotify: {str(err)}"
+                        )
+                    )
+
+        return Ok(spotify_artists)
+
+    async def __fetch_track_features(
+        self, track_id
+    ) -> Result[SpotifyApiTrackFeaturesResponse, SoundationsError]:
+        track_features_result = await self.ctx.spotify_api.get_track_features(
+            track_id=track_id
         )
 
-        print("[Response] status_code: " + str(response.status_code))
-        print("Access Token Headers: " + str(response.headers))
+        match track_features_result:
+            case Ok(result):
+                return Ok(result)
 
-        self.spotify_token = response.json()["access_token"]
+            case Err(err):
+                return Err(
+                    SoundationsError(
+                        404, f"Failed to fetch features from Spotify: {str(err)}"
+                    )
+                )
 
-    def request(self, url, T) -> Result[T, str]:
-        auth = "Bearer " + self.spotify_token
-        headers = {"Authorization": auth}
-        response = requests.get(url, headers=headers)
-
-        if response.status_code != 200:
-            print("[Response] status_code: " + str(response.status_code))
-            print("Response headers: " + str(response.headers))
-
-            if response.status_code == 401:
-                self.set_access_token()
-                print("Token refreshed")
-                return self.request(url, T)
-
-            if response.status_code == 404:
-                print("404")
-                return Err("Error 404 in request")
-
-            if response.status_code == 429:
-                sec_to_sleep = response.headers.get("retry-after")
-                if sec_to_sleep is not None:
-                    time.sleep(float(sec_to_sleep))
-                    return self.request(url, T)
-
-            if response.status_code == 503:
-                return self.request(url, T)
-
-            return Err("Unknown error in request")
-
-        try:
-            return Ok(T.parse_obj(response.json()))
-        except:
-            return Err("Error while parsing in request")
-
-    def fetch_artists_by_genre(self, genre: str) -> List[SpotifyApiArtist]:
-        artists = []
-        for i in range(0, self.config.items_per_search, self.config.spotify_limit):
-            url = self.artist_by_genre_url.format(
-                genre=genre, limit=self.config.spotify_limit, offset=i
-            )
-            artists_response = self.request(url, SpotifyApiArtistSearchResponse)
-
-            if isinstance(artists_response, Ok):
-                artists.extend(artists_response.value.artists.items)
-
-        return artists
-
-    def fetch_artist_tracks(
+    async def __fetch_artist_tracks(
         self, artist: SpotifyApiArtist
-    ) -> List[SoundationsTrackWithFeatures]:
-        tracks = []
-        for i in range(0, self.config.items_per_search, self.config.spotify_limit):
-            url = self.artists_tracks_url.format(
-                name=artist.name, limit=self.config.spotify_limit, offset=i
+    ) -> Result[List[SoundationsTrackWithFeatures], SoundationsError]:
+        tracks: list[SoundationsTrackWithFeatures] = []
+        for i in range(
+            0, self.ctx.config.items_per_search, self.ctx.config.spotify_limit
+        ):
+            tracks_search_result = await self.ctx.spotify_api.search_tracks_by_artist(
+                artist=artist, limit=self.ctx.config.spotify_limit, offset=i
             )
-            tracks_general = self.request(url, SoundationsRawTrackResponse)
 
-            if isinstance(tracks_general, Ok):
-                tracks_general = tracks_general.value.tracks.items
-                for track in tracks_general:
-                    correct_artist = False
-                    for a in track.artists:
-                        if artist.id == a.id:
-                            correct_artist = True
+            match tracks_search_result:
+                case Ok(result):
+                    for track in result.items:
+                        features_result = await self.__fetch_track_features(track.id)
+                        match features_result:
+                            case Ok(features):
+                                track_with_features = SoundationsTrackWithFeatures(
+                                    id=track.id,
+                                    popularity=track.popularity,
+                                    artists=track.artists,
+                                    danceability=features.danceability,
+                                    energy=features.energy,
+                                    key=features.key,
+                                    loudness=features.loudness,
+                                    mode=features.mode,
+                                    speechiness=features.speechiness,
+                                    acousticness=features.acousticness,
+                                    instrumentalness=features.instrumentalness,
+                                    liveness=features.liveness,
+                                    valence=features.valence,
+                                    tempo=features.tempo,
+                                    duration_ms=features.duration_ms,
+                                    time_signature=features.time_signature,
+                                )
 
-                    if not correct_artist:
-                        continue
+                                tracks.append(track_with_features)
 
-                    extra_features = self.fetch_track_features(track.id)
+                            case Err():
+                                continue
 
-                    if isinstance(extra_features, Ok):
-                        try:
-                            track = track.dict()
-                            track.update(extra_features.value.dict())
-                            tracks.append(SoundationsTrackWithFeatures.parse_obj(track))
-                        except:
-                            print("Error while parsing track")
+                case Err(err):
+                    return Err(
+                        SoundationsError(
+                            404, f"Failed to fetch tracks from Spotify: {str(err)}"
+                        )
+                    )
 
-        return tracks
+        return Ok(tracks)
 
-    def fetch_albums_by_artist(
-        self, artist: SpotifyApiArtist
-    ) -> Result[List[SpotifyApiAlbum], str]:
-        artist_id = artist.id
+    async def __fetch_tracks_by_genre(self, genres) -> None:
+        for genre in genres:
+            artists_fetch_result = await self.__fetch_artists_by_genre(genre)
+            match artists_fetch_result:
+                case Ok(artists):
+                    for artist in artists:
+                        if artist.id in self.artists_ids:
+                            continue
 
-        url = self.artists_album_url.format(id=artist_id, limit=10, offset=0)
-        albums = self.request(url, SpotifyApiAlbumSearchResponse)
+                        tracks_fetch_result = await self.__fetch_artist_tracks(artist)
+                        match tracks_fetch_result:
+                            case Ok(tracks):
+                                self.artists_ids.add(artist.id)
 
-        if isinstance(albums, Ok):
-            return Ok(albums.value.albums)
-        else:
-            return Err("Error while parsing album")
+                                self.sounds_storage.store_tracks(tracks)
+                                self.sounds_storage.store_artist(artist.id)
+                            case Err():
+                                continue
 
-    def fetch_tracks_by_genre(self, genre: str) -> List[SoundationsTrackWithFeatures]:
-        tracks = []
-        for i in range(0, self.config.items_per_search, self.config.spotify_limit):
-            url = self.track_by_genre_url.format(
-                genre=genre, limit=self.config.spotify_limit, offset=i
-            )
-            tracks_general = self.request(url, SoundationsRawTrackResponse)
+                case Err():
+                    continue
 
-            if isinstance(tracks_general, Ok):
-                tracks_general = tracks_general.value.tracks
-                for track in tracks_general:
-                    extra_features = self.fetch_track_features(track.id)
-
-                    if isinstance(extra_features, Ok):
-                        try:
-                            track = track.dict()
-                            track.update(extra_features.value.dict())
-                            tracks.append(SoundationsTrackWithFeatures.parse_obj(track))
-                        except:
-                            print("Error while parsing track")
-
-        return tracks
-
-    def fetch_track_features(
-        self, track_id
-    ) -> Result[SpotifyApiTrackFeaturesResponse, str]:
-        url = self.track_features_url
-
-        try:
-            response = SpotifyApiTrackFeaturesResponse.parse_obj(
-                self.request(
-                    url.format(id=track_id), SpotifyApiTrackFeaturesResponse
-                ).value
-            )
-            return Ok(response)
-        except:
-            return Err("Failed to parse track features")
-
-    def store_dataset_by_genres(self, genres):
+    def fetch_tracks_by_genres(self, genres) -> None:
         if self.resume:
             self.artists_ids = self.sounds_storage.get_artists()
         else:
             self.sounds_storage.write_headers()
 
-        for genre in genres:
-            artists = self.fetch_artists_by_genre(genre)
-
-            for artist in artists:
-                if artist.id in self.artists_ids:
-                    continue
-
-                tracks = self.fetch_artist_tracks(artist)
-
-                self.artists_ids.add(artist.id)
-                self.sounds_storage.store_tracks(tracks)
-                self.sounds_storage.store_artist(artist.id)
+        asyncio.run(self.__fetch_tracks_by_genre(genres))
