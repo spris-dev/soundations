@@ -7,7 +7,7 @@ import { SoundationsTrack } from "snd-server-api-client"
 import { useAppContext } from "snd-client/app-context"
 import { IconSearch } from "snd-client/components/icons"
 import { Input } from "snd-client/components/input"
-import { OpStatus, rndr } from "snd-client/utils"
+import { OpStatus, match } from "snd-client/utils"
 
 type TrackSearchProps = Record<never, never>
 
@@ -106,7 +106,7 @@ export const TrackSearchResults: FunctionalComponent = () => {
 
   return (
     <>
-      {rndr(({ assertNever }) => {
+      {match(({ assertNever }) => {
         switch (search.status) {
           case OpStatus.IDLE:
             return null
