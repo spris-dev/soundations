@@ -1,12 +1,16 @@
 import { FunctionalComponent } from "preact"
-import { useEffect, useRef } from "preact/hooks"
+import { useEffect } from "preact/hooks"
 import { useSignal } from "@preact/signals"
 
-import { TrackRecommendationsItem } from "snd-server-api-client"
+import {
+  SoundationsTrack,
+  TrackRecommendationsItem,
+} from "snd-server-api-client"
 
+import { isTrackPlayerTrack } from "snd-client/app-state"
 import { useAppContext } from "snd-client/app-context"
-import { OpStatus, rndr } from "snd-client/utils"
-import { IconPause, IconPlay } from "snd-client/components/icons"
+import { OpStatus, match } from "snd-client/utils"
+import { TrackPlayerIcon } from "snd-client/components/track-player"
 
 export const TrackRecommendations: FunctionalComponent = () => {
   const {
@@ -34,7 +38,7 @@ export const TrackRecommendations: FunctionalComponent = () => {
           :
         </div>
       )}
-      {rndr(({ assertNever }) => {
+      {match(({ assertNever }) => {
         switch (value.status) {
           case OpStatus.IDLE:
             return null
@@ -55,12 +59,17 @@ export const TrackRecommendations: FunctionalComponent = () => {
 const TrackRecommendation: FunctionalComponent<{
   value: TrackRecommendationsItem
 }> = ({ value: { track, recommendation } }) => {
-  const isFocused = useSignal(false)
+  // TODO: add link to Spotify
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const trackUrl = `https://open.spotify.com/track/${track.id}`
+  const isFocused = useSignal(false)
+  const preview = useAudioPreview(track)
 
   return (
-    <a
-      href={trackUrl}
+    <div
+      tabIndex={0}
+      role="button"
+      onClick={preview?.togglePlay}
       className="flex items-center w-full h-40 p-2 mb-4 rounded-md border-2 border-color-primary focus:outline-none focus:bg-color-active-lessish"
       onMouseOver={(event) => {
         isFocused.value = true
@@ -78,12 +87,16 @@ const TrackRecommendation: FunctionalComponent<{
     >
       <div className="relative mr-4 h-full aspect-square rounded-md border-solid border-2 border-color-primary">
         <img src={track.album.images[0]?.url} className="w-full h-full" />
-        {track.preview_url && isFocused.value && (
+        {preview && isFocused.value && (
           <div className="w-full h-full bg-color-background opacity-50 absolute top-0 left-0"></div>
         )}
-        {track.preview_url && isFocused.value && (
+        {preview && isFocused.value && (
           <div class="absolute top-[50%] left-[50%] translate-x-[-50%] translate-y-[-50%]">
-            <TrackAudioPreview mediaUrl={track.preview_url} />
+            <div className="w-12 h-12">
+              <TrackPlayerIcon
+                state={preview.isActiveTrack ? preview.playState : "paused"}
+              />
+            </div>
           </div>
         )}
       </div>
@@ -103,52 +116,40 @@ const TrackRecommendation: FunctionalComponent<{
           </span>
         </div>
       </div>
-    </a>
+    </div>
   )
 }
 
-const TrackAudioPreview: FunctionalComponent<{
-  mediaUrl: string
-}> = ({ mediaUrl }) => {
-  const isPlaying = useSignal(false)
-  const audio = useRef<HTMLAudioElement | null>(null)
+const useAudioPreview = (track: SoundationsTrack) => {
+  if (!isTrackPlayerTrack(track)) {
+    return null
+  }
 
-  useEffect(() => {
-    audio.current = new Audio(mediaUrl)
-    audio.current.volume = 0.5
+  const {
+    state: { trackPlayer },
+    effects: {
+      trackPlayer: { play, pause, resume },
+    },
+  } = useAppContext()
 
-    return () => {
-      audio.current?.pause()
-    }
-  }, [mediaUrl])
+  const isActiveTrack = trackPlayer.track.value?.id === track.id
+  const playState = trackPlayer.state.value
 
   const togglePlay = (event: Event) => {
     event.preventDefault()
 
-    if (isPlaying.value) {
-      isPlaying.value = false
-      audio.current?.pause()
-    } else if (
-      [
-        HTMLMediaElement.HAVE_FUTURE_DATA,
-        HTMLMediaElement.HAVE_ENOUGH_DATA,
-      ].includes(audio.current?.readyState ?? -1)
-    ) {
-      isPlaying.value = true
-      audio.current?.play()
+    if (!isActiveTrack) {
+      play(track)
+    } else if (playState === "playing") {
+      pause()
+    } else if (playState === "paused") {
+      resume()
     }
   }
 
-  const iconClass =
-    "w-full h-full fill-current stroke-color-primary text-color-active"
-
-  return (
-    <div role="button" onClick={togglePlay} className="w-12 h-12">
-      {isPlaying.value ? (
-        <IconPause className={iconClass} />
-      ) : (
-        <IconPlay className={iconClass} />
-      )}
-    </div>
-  )
+  return {
+    isActiveTrack,
+    playState,
+    togglePlay,
+  }
 }

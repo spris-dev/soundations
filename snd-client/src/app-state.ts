@@ -15,6 +15,15 @@ export type AppState = {
   recommendations: {
     recommendationsState: Signal<RecommendationsState>
   }
+  trackPlayer: {
+    state: Signal<"playing" | "paused" | "loading">
+    track: Signal<TrackPlayerTrack | null>
+    volume: Signal<number>
+  }
+}
+
+export type TrackPlayerTrack = SoundationsTrack & {
+  preview_url: NonNullable<SoundationsTrack["preview_url"]>
 }
 
 type TrackSearchState =
@@ -40,5 +49,14 @@ export const createAppState: CreateAppState = () => {
     recommendations: {
       recommendationsState: signal({ status: OpStatus.IDLE }),
     },
+    trackPlayer: {
+      state: signal("paused"),
+      track: signal(null),
+      volume: signal(0.5),
+    },
   }
 }
+
+export const isTrackPlayerTrack = (
+  track: SoundationsTrack
+): track is TrackPlayerTrack => track.preview_url != null

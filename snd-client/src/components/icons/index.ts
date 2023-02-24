@@ -1,3 +1,6 @@
 export * from "./icon-search"
 export * from "./icon-pause"
 export * from "./icon-play"
+export * from "./icon-spinner"
+export * from "./icon-volume"
+export * from "./icon-volume-mute"

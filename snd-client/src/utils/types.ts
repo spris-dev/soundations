@@ -11,3 +11,5 @@ export type ToReadonlySignal<T> = T extends Signal<infer K>
 export type ToReadonlySignalDeep<T> = {
   readonly [P in keyof T]: ToReadonlySignal<T[P]>
 }
+
+export type UnwrapSignal<T> = T extends Signal<infer K> ? K : never
