@@ -9,10 +9,7 @@ const ctx = createAppContext()
 export function App() {
   return (
     <PreactAppContext.Provider value={ctx}>
-      <Layout>
-        <div className="w-full h-20 z-10 mb-8">
-          <TrackSearch />
-        </div>
+      <Layout trackSearch={<TrackSearch />}>
         <TrackRecommendations />
         <TrackPlayer />
       </Layout>
