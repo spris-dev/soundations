@@ -83,7 +83,13 @@ export const TrackPlayer: FunctionalComponent = () => {
       </div>
 
       <div className="h-full mr-4 flex flex-none items-center justify-between">
-        <IconVolumeMute className="w-8 h-8 mr-2 flex-none fill-current stroke-color-primary text-color-active" />
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => effects.trackPlayer.setVolume(0)}
+        >
+          <IconVolumeMute className="w-8 h-8 mr-2 flex-none fill-current stroke-color-primary text-color-active" />
+        </div>
         <input
           type="range"
           class="h-2 rounded-md flex-1 accent-color-active"
@@ -93,7 +99,13 @@ export const TrackPlayer: FunctionalComponent = () => {
           max="1"
           step="0.1"
         />
-        <IconVolume className="w-8 h-8 ml-2 flex-none fill-current stroke-color-primary text-color-active" />
+        <div
+          role="button"
+          tabIndex={0}
+          onClick={() => effects.trackPlayer.setVolume(1)}
+        >
+          <IconVolume className="w-8 h-8 ml-2 flex-none fill-current stroke-color-primary text-color-active" />
+        </div>
       </div>
     </div>
   )
