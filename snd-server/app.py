@@ -2,6 +2,12 @@ import httpx
 import logging
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry import trace
+from opentelemetry.instrumentation.requests import RequestsInstrumentor
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from context import Context
 from recommendation_engine import Recommender
@@ -34,6 +40,12 @@ def create_app(ctx: Context) -> FastAPI:
     app.include_router(create_health_router(ctx), prefix="/api")
     app.include_router(create_tracks_router(ctx), prefix="/api")
 
+    provider = TracerProvider()
+    processor = BatchSpanProcessor(OTLPSpanExporter())
+    provider.add_span_processor(processor)
+    trace.set_tracer_provider(provider)
+    tracer = trace.get_tracer("soundations")
+
     @app.on_event("startup")
     async def startup():
         configure_logging()
@@ -52,6 +64,9 @@ def create_app(ctx: Context) -> FastAPI:
     async def shutdown():
         await ctx.sqlite_storage.disconnect()
         await ctx.http_client.aclose()
+
+    FastAPIInstrumentor.instrument_app(app)
+    RequestsInstrumentor().instrument()
 
     return app
 
