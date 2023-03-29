@@ -11,9 +11,10 @@ services:
       - SND_RECOMMENDER_ARCHIVE_PATH=/soundations/snd-server/recommender_model.zip
       - SND_SPOTIFY_CLIENT_ID=${SND_SPOTIFY_CLIENT_ID:-dummy_spotify_client_id}
       - SND_SPOTIFY_CLIENT_SECRET=${SND_SPOTIFY_CLIENT_SECRET:-dummy_spotify_client_secret}
-      - OTEL_EXPORTER_OTLP_ENDPOINT="https://api.honeycomb.io"
+      - OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io
+      - OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=http/json
       - OTEL_EXPORTER_OTLP_HEADERS=${OTEL_EXPORTER_OTLP_HEADERS:-dummy_otel_exporter_otlp_headers}
-      - OTEL_SERVICE_NAME="soundations"
+      - OTEL_SERVICE_NAME=soundations
     build:
       context: ./
       dockerfile: ./snd-server/Dockerfile.prod
