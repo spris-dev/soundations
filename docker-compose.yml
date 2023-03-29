@@ -13,7 +13,7 @@ services:
       - SND_SPOTIFY_CLIENT_SECRET=${SND_SPOTIFY_CLIENT_SECRET:-dummy_spotify_client_secret}
       - OTEL_EXPORTER_OTLP_ENDPOINT=https://api.honeycomb.io
       - OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=http/json
-      - OTEL_EXPORTER_OTLP_HEADERS=${OTEL_EXPORTER_OTLP_HEADERS:-dummy_otel_exporter_otlp_headers}
+      - OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=${HONEYCOMB_API_KEY:-dummy_honeycomb_api_key}
       - OTEL_SERVICE_NAME=soundations
     build:
       context: ./
