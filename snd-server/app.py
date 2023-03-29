@@ -16,6 +16,7 @@ from services.track_service import TrackService
 from services.sqlite_storage import SqliteStorage
 from services.config import Config
 from services.spotify_api import SpotifyApi
+from services.tracer import Tracer
 from routes.health import create_health_router
 from routes.tracks import create_tracks_router
 
@@ -30,6 +31,7 @@ def create_ctx() -> Context:
     ctx.recommender = Recommender(ctx)
     ctx.thread_pool = ThreadPool()
     ctx.track_service = TrackService(ctx)
+    ctx.tracer = Tracer()
 
     return ctx
 
@@ -44,7 +46,9 @@ def create_app(ctx: Context) -> FastAPI:
     processor = BatchSpanProcessor(OTLPSpanExporter())
     provider.add_span_processor(processor)
     trace.set_tracer_provider(provider)
-    tracer = trace.get_tracer("soundations")
+
+    FastAPIInstrumentor.instrument_app(app)
+    RequestsInstrumentor().instrument()
 
     @app.on_event("startup")
     async def startup():
@@ -64,9 +68,6 @@ def create_app(ctx: Context) -> FastAPI:
     async def shutdown():
         await ctx.sqlite_storage.disconnect()
         await ctx.http_client.aclose()
-
-    FastAPIInstrumentor.instrument_app(app)
-    RequestsInstrumentor().instrument()
 
     return app
 

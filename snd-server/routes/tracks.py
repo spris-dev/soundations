@@ -41,6 +41,8 @@ def create_tracks_router(ctx: Context):
         limit: int = Query(default=5, ge=1, le=10),
         offset: int = Query(default=0, ge=0, le=1000),
     ) -> TracksSearchResponse:
+        ctx.tracer.add("track_search_prompt", q)
+
         result = await ctx.spotify_api.search_tracks(q=q, limit=limit, offset=offset)
 
         match result:
