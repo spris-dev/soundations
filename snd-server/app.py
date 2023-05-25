@@ -19,6 +19,7 @@ from services.spotify_api import SpotifyApi
 from services.tracer import Tracer
 from routes.health import create_health_router
 from routes.tracks import create_tracks_router
+from routes.users import create_users_router
 
 
 def create_ctx() -> Context:
@@ -41,6 +42,7 @@ def create_app(ctx: Context) -> FastAPI:
 
     app.include_router(create_health_router(ctx), prefix="/api")
     app.include_router(create_tracks_router(ctx), prefix="/api")
+    app.include_router(create_users_router(ctx), prefix="/api")
 
     provider = TracerProvider()
     processor = BatchSpanProcessor(OTLPSpanExporter())
