@@ -41,6 +41,9 @@ opentelemetry-sdk = "^1.16.0"
 opentelemetry-exporter-otlp-proto-http = "^1.16.0"
 opentelemetry-instrumentation-fastapi = "^0.37b0"
 opentelemetry-instrumentation-requests = "^0.37b0"
+python-multipart = "^0.0.6"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 
 [tool.poetry.group.dev.dependencies]
 black = "^23.1.0"

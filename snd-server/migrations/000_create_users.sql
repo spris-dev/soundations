@@ -1,5 +1,5 @@
 create table if not exists users (
   id integer primary key,
-  email text not null,
-  access_key_hash text
+  username text not null unique,
+  hashed_password text
 );

@@ -7,6 +7,7 @@ import { FetchHttpRequest } from './core/FetchHttpRequest';
 
 import { HealthService } from './services/HealthService';
 import { TracksService } from './services/TracksService';
+import { UsersService } from './services/UsersService';
 
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
 
@@ -14,6 +15,7 @@ export class SoundationsApiClient {
 
     public readonly health: HealthService;
     public readonly tracks: TracksService;
+    public readonly users: UsersService;
 
     public readonly request: BaseHttpRequest;
 
@@ -32,6 +34,7 @@ export class SoundationsApiClient {
 
         this.health = new HealthService(this.request);
         this.tracks = new TracksService(this.request);
+        this.users = new UsersService(this.request);
     }
 }
 

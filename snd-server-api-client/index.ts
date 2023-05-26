@@ -15,6 +15,7 @@ export type { SoundationsTrack } from './models/SoundationsTrack';
 export type { SpotifyApiAlbum } from './models/SpotifyApiAlbum';
 export type { SpotifyApiArtist } from './models/SpotifyApiArtist';
 export type { SpotifyApiImage } from './models/SpotifyApiImage';
+export type { Token } from './models/Token';
 export type { TrackRecommendationsItem } from './models/TrackRecommendationsItem';
 export type { TracksRecommendationsResponse } from './models/TracksRecommendationsResponse';
 export type { TracksSearchResponse } from './models/TracksSearchResponse';
@@ -22,3 +23,4 @@ export type { ValidationError } from './models/ValidationError';
 
 export { HealthService } from './services/HealthService';
 export { TracksService } from './services/TracksService';
+export { UsersService } from './services/UsersService';

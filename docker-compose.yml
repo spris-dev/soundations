@@ -15,6 +15,8 @@ services:
       - OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=http/json
       - OTEL_EXPORTER_OTLP_HEADERS=x-honeycomb-team=${HONEYCOMB_API_KEY:-dummy_honeycomb_api_key}
       - OTEL_SERVICE_NAME=soundations
+      - SND_SECRET_KEY=${SND_SECRET_KEY:-dummy_snd_secret_key}
+      - SND_ENC_ALGORITHM=HS256
     build:
       context: ./
       dockerfile: ./snd-server/Dockerfile.prod

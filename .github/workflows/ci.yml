@@ -99,4 +99,5 @@ jobs:
         SND_MAIN_SERVER_HOST: ${{ secrets.SND_MAIN_SERVER_HOST }}
         SND_SPOTIFY_CLIENT_ID: ${{ secrets.SND_SPOTIFY_CLIENT_ID }}
         SND_SPOTIFY_CLIENT_SECRET: ${{ secrets.SND_SPOTIFY_CLIENT_SECRET }}
+        SND_SECRET_KEY: ${{ secrets.SND_SECRET_KEY }}
         HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
