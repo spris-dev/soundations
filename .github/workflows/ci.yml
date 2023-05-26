@@ -100,5 +100,4 @@ jobs:
         SND_SPOTIFY_CLIENT_ID: ${{ secrets.SND_SPOTIFY_CLIENT_ID }}
         SND_SPOTIFY_CLIENT_SECRET: ${{ secrets.SND_SPOTIFY_CLIENT_SECRET }}
         SND_SECRET_KEY: ${{ secrets.SND_SECRET_KEY }}
-        SND_ENC_ALGORITHM: ${{ secrets.SND_ENC_ALGORITHM }}
         HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
