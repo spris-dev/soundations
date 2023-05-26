@@ -5,17 +5,17 @@ import type { BaseHttpRequest } from './core/BaseHttpRequest';
 import type { OpenAPIConfig } from './core/OpenAPI';
 import { FetchHttpRequest } from './core/FetchHttpRequest';
 
-import { DefaultService } from './services/DefaultService';
 import { HealthService } from './services/HealthService';
 import { TracksService } from './services/TracksService';
+import { UsersService } from './services/UsersService';
 
 type HttpRequestConstructor = new (config: OpenAPIConfig) => BaseHttpRequest;
 
 export class SoundationsApiClient {
 
-    public readonly default: DefaultService;
     public readonly health: HealthService;
     public readonly tracks: TracksService;
+    public readonly users: UsersService;
 
     public readonly request: BaseHttpRequest;
 
@@ -32,9 +32,9 @@ export class SoundationsApiClient {
             ENCODE_PATH: config?.ENCODE_PATH,
         });
 
-        this.default = new DefaultService(this.request);
         this.health = new HealthService(this.request);
         this.tracks = new TracksService(this.request);
+        this.users = new UsersService(this.request);
     }
 }
 

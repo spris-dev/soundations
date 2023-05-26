@@ -12,7 +12,6 @@ class TokenData(BaseModel):
 
 class User(BaseModel):
     username: str
-    email: str | None = None
 
 
 class UserInDB(User):

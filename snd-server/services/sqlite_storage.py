@@ -1,6 +1,7 @@
 import logging
 from pathlib import Path
 from databases import Database
+from sqlite3 import IntegrityError
 
 from context import Context
 from models.users import UserInDB
@@ -39,11 +40,10 @@ class SqliteStorage:
         return UserInDB.parse_obj(record._mapping)
 
     async def store_user(self, user) -> UserInDB | None:
-        user_in_DB = await self.get_user(user.username)
-        if user_in_DB:
+        query = "INSERT INTO users(username, hashed_password) VALUES (:username, :hashed_password)"
+        try:
+            await self.db.execute(query=query, values=user.__dict__)
+        except IntegrityError:
             return None
-
-        query = "INSERT INTO users(username, email, hashed_password) VALUES (:username, :email, :hashed_password)"
-        await self.db.execute(query=query, values=user.__dict__)
 
         return await self.get_user(user.username)

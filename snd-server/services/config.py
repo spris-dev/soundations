@@ -12,7 +12,7 @@ class Config:
     archive_storage_path: str = os.environ["SND_RECOMMENDER_ARCHIVE_PATH"]
 
     snd_secret_key: str = os.environ["SND_SECRET_KEY"]
-    algorithm: str = os.environ["ALGORITHM"]
+    snd_enc_algorithm: str = os.environ["SND_ENC_ALGORITHM"]
     access_token_expire_minutes: float = 30
 
     sounds_storage_path: str = "../data/dataset.csv"

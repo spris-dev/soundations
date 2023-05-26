@@ -1,12 +1,12 @@
 from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, status, Depends
-from fastapi.security import OAuth2PasswordRequestForm, HTTPBearer
+from fastapi.security import HTTPBearer
 from jose import jwt
 from passlib.context import CryptContext
 from typing import Literal
 
 from context import Context
-from models.request_forms import SignUpRequestForm
+from models.request_forms import TokenRequestForm
 from models.users import Token, UserInDB
 
 
@@ -41,11 +41,9 @@ def create_users_router(ctx: Context) -> APIRouter:
             return False
         return user
 
-    async def store_user(
-        username: str, email: str, password: str
-    ) -> UserInDB | Literal[False]:
+    async def store_user(username: str, password: str) -> UserInDB | Literal[False]:
         user_model = UserInDB(
-            username=username, email=email, hashed_password=get_password_hash(password)
+            username=username, hashed_password=get_password_hash(password)
         )
         user = await ctx.sqlite_storage.store_user(user=user_model)
         if not user:
@@ -60,13 +58,17 @@ def create_users_router(ctx: Context) -> APIRouter:
             expire = datetime.utcnow() + timedelta(minutes=15)
         to_encode.update({"exp": expire})
         encoded_jwt = jwt.encode(
-            to_encode, ctx.config.snd_secret_key, algorithm=ctx.config.algorithm
+            to_encode, ctx.config.snd_secret_key, algorithm=ctx.config.snd_enc_algorithm
         )
         return encoded_jwt
 
-    @router.post("/login", response_model=Token)
+    @router.post(
+        "/login",
+        response_model=Token,
+        tags=["users"],
+    )
     async def login_for_access_token(
-        form_data: OAuth2PasswordRequestForm = Depends(),
+        form_data: TokenRequestForm = Depends(),
     ) -> dict[str, str]:
         user = await authenticate_user(form_data.username, form_data.password)
         if not user:
@@ -81,14 +83,18 @@ def create_users_router(ctx: Context) -> APIRouter:
         )
         return {"access_token": access_token, "token_type": "bearer"}
 
-    @router.post("/signup", response_model=Token)
+    @router.post(
+        "/signup",
+        response_model=Token,
+        tags=["users"],
+    )
     async def signup_for_access_token(
-        form_data: SignUpRequestForm = Depends(),
+        form_data: TokenRequestForm = Depends(),
     ) -> dict[str, str]:
-        user = await store_user(form_data.username, form_data.email, form_data.password)
+        user = await store_user(form_data.username, form_data.password)
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+                status_code=status.HTTP_409_CONFLICT,
                 detail="User already exists or username is taken",
                 headers={"WWW-Authenticate": "Bearer"},
             )
