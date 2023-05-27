@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status
 from fastapi.security import HTTPBearer
 from jose import jwt
 from passlib.context import CryptContext
@@ -68,7 +68,7 @@ def create_users_router(ctx: Context) -> APIRouter:
         tags=["users"],
     )
     async def login_for_access_token(
-        form_data: TokenRequestForm = Depends(),
+        form_data: TokenRequestForm,
     ) -> dict[str, str]:
         user = await authenticate_user(form_data.username, form_data.password)
         if not user:
@@ -89,7 +89,7 @@ def create_users_router(ctx: Context) -> APIRouter:
         tags=["users"],
     )
     async def signup_for_access_token(
-        form_data: TokenRequestForm = Depends(),
+        form_data: TokenRequestForm,
     ) -> dict[str, str]:
         user = await store_user(form_data.username, form_data.password)
         if not user:

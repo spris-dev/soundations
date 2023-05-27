@@ -2,6 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { Token } from '../models/Token';
+import type { TokenRequestForm } from '../models/TokenRequestForm';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -16,19 +17,15 @@ export class UsersService {
      * @throws ApiError
      */
     public loginForAccessToken({
-        username,
-        password,
+        requestBody,
     }: {
-        username: string,
-        password: string,
+        requestBody: TokenRequestForm,
     }): CancelablePromise<Token> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/login',
-            query: {
-                'username': username,
-                'password': password,
-            },
+            body: requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },
@@ -41,19 +38,15 @@ export class UsersService {
      * @throws ApiError
      */
     public signupForAccessToken({
-        username,
-        password,
+        requestBody,
     }: {
-        username: string,
-        password: string,
+        requestBody: TokenRequestForm,
     }): CancelablePromise<Token> {
         return this.httpRequest.request({
             method: 'POST',
             url: '/api/signup',
-            query: {
-                'username': username,
-                'password': password,
-            },
+            body: requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },
