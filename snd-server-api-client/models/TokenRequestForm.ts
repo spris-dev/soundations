@@ -2,8 +2,8 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type User = {
+export type TokenRequestForm = {
     username: string;
-    email?: string;
+    password: string;
 };
 

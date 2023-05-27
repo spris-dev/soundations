@@ -1,20 +1,12 @@
 from datetime import datetime, timedelta
-from fastapi import APIRouter, HTTPException, status, Depends
-<<<<<<< HEAD
+from fastapi import APIRouter, HTTPException, status
 from fastapi.security import HTTPBearer
-=======
-from fastapi.security import OAuth2PasswordRequestForm, HTTPBearer
->>>>>>> 8bcb25e (Add user authorization with JWT tokens)
 from jose import jwt
 from passlib.context import CryptContext
 from typing import Literal
 
 from context import Context
-<<<<<<< HEAD
 from models.request_forms import TokenRequestForm
-=======
-from models.request_forms import SignUpRequestForm
->>>>>>> 8bcb25e (Add user authorization with JWT tokens)
 from models.users import Token, UserInDB
 
 
@@ -76,7 +68,7 @@ def create_users_router(ctx: Context) -> APIRouter:
         tags=["users"],
     )
     async def login_for_access_token(
-        form_data: TokenRequestForm = Depends(),
+        form_data: TokenRequestForm,
     ) -> dict[str, str]:
         user = await authenticate_user(form_data.username, form_data.password)
         if not user:
@@ -97,7 +89,7 @@ def create_users_router(ctx: Context) -> APIRouter:
         tags=["users"],
     )
     async def signup_for_access_token(
-        form_data: TokenRequestForm = Depends(),
+        form_data: TokenRequestForm,
     ) -> dict[str, str]:
         user = await store_user(form_data.username, form_data.password)
         if not user:
