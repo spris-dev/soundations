@@ -1,5 +1,5 @@
 import { FunctionalComponent } from "preact"
-import { useEffect } from "preact/hooks"
+import { useEffect, useCallback } from "preact/hooks"
 import { useSignal } from "@preact/signals"
 
 import {
@@ -9,6 +9,7 @@ import {
 
 import { isTrackPlayerTrack } from "snd-client/app-state"
 import { useAppContext } from "snd-client/app-context"
+import { useKeyboard } from "snd-client/hooks"
 import { OpStatus, match } from "snd-client/utils"
 import { TrackPlayerIcon } from "snd-client/components/track-player"
 
@@ -59,11 +60,23 @@ export const TrackRecommendations: FunctionalComponent = () => {
 const TrackRecommendation: FunctionalComponent<{
   value: TrackRecommendationsItem
 }> = ({ value: { track, recommendation } }) => {
-  // TODO: add link to Spotify
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const trackUrl = `https://open.spotify.com/track/${track.id}`
   const isFocused = useSignal(false)
   const preview = useAudioPreview(track)
+
+  const handleKeyPress = useCallback(
+    (event: KeyboardEvent) => {
+      if (
+        isFocused.value &&
+        (event.code === "Enter" || event.code === "Space")
+      ) {
+        preview?.togglePlay(event)
+      }
+    },
+    [isFocused.value, preview]
+  )
+
+  useKeyboard({ onKeyPress: handleKeyPress })
 
   return (
     <div
@@ -101,13 +114,23 @@ const TrackRecommendation: FunctionalComponent<{
         )}
       </div>
 
-      <div>
-        <div className="font-bold text-xl">
+      <div className="overflow-hidden">
+        <div className="font-bold text-xl overflow-hidden text-ellipsis whitespace-nowrap">
           {track.artists[0]?.name} - {track.name}
         </div>
-        <div>
+        <div className="overflow-hidden text-ellipsis whitespace-nowrap">
           {track.album.name} (
           {new Date(track.album.release_date).getUTCFullYear()})
+        </div>
+        <div>
+          🔗
+          <a
+            className="mt-2 underline text-color-active"
+            href={trackUrl}
+            rel="noopener noreferrer"
+          >
+            Spotify
+          </a>
         </div>
         <div className="mt-2 text-lg font-bold italic">
           Similarity:{" "}
