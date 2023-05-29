@@ -2,7 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 import type { Token } from '../models/Token';
-import type { TokenRequestForm } from '../models/TokenRequestForm';
+import type { TokenRequestPayload } from '../models/TokenRequestPayload';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -12,18 +12,18 @@ export class UsersService {
     constructor(public readonly httpRequest: BaseHttpRequest) {}
 
     /**
-     * Login For Access Token
+     * Login
      * @returns Token Successful Response
      * @throws ApiError
      */
-    public loginForAccessToken({
+    public login({
         requestBody,
     }: {
-        requestBody: TokenRequestForm,
+        requestBody: TokenRequestPayload,
     }): CancelablePromise<Token> {
         return this.httpRequest.request({
             method: 'POST',
-            url: '/api/login',
+            url: '/api/users/login',
             body: requestBody,
             mediaType: 'application/json',
             errors: {
@@ -33,18 +33,18 @@ export class UsersService {
     }
 
     /**
-     * Signup For Access Token
+     * Signup
      * @returns Token Successful Response
      * @throws ApiError
      */
-    public signupForAccessToken({
+    public signup({
         requestBody,
     }: {
-        requestBody: TokenRequestForm,
+        requestBody: TokenRequestPayload,
     }): CancelablePromise<Token> {
         return this.httpRequest.request({
             method: 'POST',
-            url: '/api/signup',
+            url: '/api/users/signup',
             body: requestBody,
             mediaType: 'application/json',
             errors: {

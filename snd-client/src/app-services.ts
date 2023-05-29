@@ -5,8 +5,8 @@ type CreateAppServices = (ctx: AppContext) => {
   soundationsApi: ReturnType<typeof createSoundationsApi>
 }
 
-export const createAppServices: CreateAppServices = () => {
+export const createAppServices: CreateAppServices = (ctx) => {
   return {
-    soundationsApi: createSoundationsApi(),
+    soundationsApi: createSoundationsApi(ctx),
   }
 }

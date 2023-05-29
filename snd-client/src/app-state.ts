@@ -1,7 +1,9 @@
+import { type VNode } from "preact"
 import { signal, Signal } from "@preact/signals"
-import {
+import type {
   SoundationsTrack,
   TrackRecommendationsItem,
+  TokenRequestPayload,
 } from "snd-server-api-client"
 
 import { OpStatus } from "snd-client/utils"
@@ -19,6 +21,12 @@ export type AppState = {
     state: Signal<"playing" | "paused" | "loading">
     track: Signal<TrackPlayerTrack | null>
     volume: Signal<number>
+  }
+  dialog: {
+    content: Signal<VNode | null>
+  }
+  user: {
+    authState: Signal<AuthState>
   }
 }
 
@@ -38,6 +46,16 @@ type RecommendationsState =
   | { status: OpStatus.OK; result: TrackRecommendationsItem[] }
   | { status: OpStatus.ERROR; error: unknown }
 
+type AuthState =
+  | { status: OpStatus.IDLE }
+  | {
+      status: OpStatus.LOADING
+      action: "login" | "signup"
+      payload: TokenRequestPayload
+    }
+  | { status: OpStatus.OK; result: { name: string; token: string } }
+  | { status: OpStatus.ERROR; error: unknown }
+
 type CreateAppState = () => AppState
 export const createAppState: CreateAppState = () => {
   return {
@@ -53,6 +71,12 @@ export const createAppState: CreateAppState = () => {
       state: signal("paused"),
       track: signal(null),
       volume: signal(0.5),
+    },
+    dialog: {
+      content: signal(null),
+    },
+    user: {
+      authState: signal({ status: OpStatus.IDLE }),
     },
   }
 }
