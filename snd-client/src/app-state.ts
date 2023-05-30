@@ -6,6 +6,7 @@ import type {
   TokenRequestPayload,
 } from "snd-server-api-client"
 
+import type { AppContext } from "snd-client/app-context"
 import { OpStatus } from "snd-client/utils"
 
 export type AppState = {
@@ -34,6 +35,8 @@ export type TrackPlayerTrack = SoundationsTrack & {
   preview_url: NonNullable<SoundationsTrack["preview_url"]>
 }
 
+export type AuthStateResult = { name: string; token: string }
+
 type TrackSearchState =
   | { status: OpStatus.IDLE }
   | { status: OpStatus.LOADING; result?: SoundationsTrack[] | null }
@@ -53,11 +56,17 @@ type AuthState =
       action: "login" | "signup"
       payload: TokenRequestPayload
     }
-  | { status: OpStatus.OK; result: { name: string; token: string } }
+  | { status: OpStatus.OK; result: AuthStateResult }
   | { status: OpStatus.ERROR; error: unknown }
 
-type CreateAppState = () => AppState
-export const createAppState: CreateAppState = () => {
+type CreateAppState = (ctx: AppContext) => AppState
+export const createAppState: CreateAppState = (ctx) => {
+  const {
+    services: { authStateStorage },
+  } = ctx
+
+  const persistedAuthStateResult = authStateStorage.get()
+
   return {
     trackSearch: {
       searchTerm: signal(""),
@@ -76,7 +85,11 @@ export const createAppState: CreateAppState = () => {
       content: signal(null),
     },
     user: {
-      authState: signal({ status: OpStatus.IDLE }),
+      authState: signal(
+        persistedAuthStateResult
+          ? { status: OpStatus.OK, result: persistedAuthStateResult }
+          : { status: OpStatus.IDLE }
+      ),
     },
   }
 }
