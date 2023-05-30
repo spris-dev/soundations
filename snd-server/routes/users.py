@@ -4,14 +4,19 @@ from fastapi.security import HTTPBearer
 from jose import jwt
 from passlib.context import CryptContext
 from typing import Literal
+from pydantic import BaseModel, Field
 
 from context import Context
-from models.request_forms import TokenRequestForm
 from models.users import Token, UserInDB
 
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = HTTPBearer()
+
+
+class TokenRequestPayload(BaseModel):
+    username: str = Field(max_length=64, min_length=4)
+    password: str = Field(max_length=64, min_length=8)
 
 
 def verify_password(plain_password, hashed_password) -> bool:
@@ -63,14 +68,14 @@ def create_users_router(ctx: Context) -> APIRouter:
         return encoded_jwt
 
     @router.post(
-        "/login",
+        "/users/login",
         response_model=Token,
         tags=["users"],
     )
-    async def login_for_access_token(
-        form_data: TokenRequestForm,
+    async def login(
+        payload: TokenRequestPayload,
     ) -> dict[str, str]:
-        user = await authenticate_user(form_data.username, form_data.password)
+        user = await authenticate_user(payload.username, payload.password)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -84,14 +89,14 @@ def create_users_router(ctx: Context) -> APIRouter:
         return {"access_token": access_token, "token_type": "bearer"}
 
     @router.post(
-        "/signup",
+        "/users/signup",
         response_model=Token,
         tags=["users"],
     )
-    async def signup_for_access_token(
-        form_data: TokenRequestForm,
+    async def signup(
+        payload: TokenRequestPayload,
     ) -> dict[str, str]:
-        user = await store_user(form_data.username, form_data.password)
+        user = await store_user(payload.username, payload.password)
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,

@@ -42,7 +42,6 @@ export const Input: FunctionalComponent<InputProps> = ({
         value={value}
         onInput={handleInput}
         placeholder={placeholder}
-        type="text"
         className="shrink w-full h-full block placeholder:italic focus:outline-none rounded-md bg-color-background"
       />
     </div>

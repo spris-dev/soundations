@@ -16,7 +16,7 @@ export type { SpotifyApiAlbum } from './models/SpotifyApiAlbum';
 export type { SpotifyApiArtist } from './models/SpotifyApiArtist';
 export type { SpotifyApiImage } from './models/SpotifyApiImage';
 export type { Token } from './models/Token';
-export type { TokenRequestForm } from './models/TokenRequestForm';
+export type { TokenRequestPayload } from './models/TokenRequestPayload';
 export type { TrackRecommendationsItem } from './models/TrackRecommendationsItem';
 export type { TracksRecommendationsResponse } from './models/TracksRecommendationsResponse';
 export type { TracksSearchResponse } from './models/TracksSearchResponse';

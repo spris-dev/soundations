@@ -2,11 +2,13 @@ import { FunctionalComponent, VNode } from "preact"
 
 type LayoutProps = {
   trackSearch: VNode
+  userPanel: VNode
 }
 
 export const Layout: FunctionalComponent<LayoutProps> = ({
   children,
   trackSearch,
+  userPanel,
 }) => {
   return (
     <div className="w-full min-h-full text-color-primary bg-color-background relative z-0 pt-32 pb-32">
@@ -17,6 +19,9 @@ export const Layout: FunctionalComponent<LayoutProps> = ({
           </div>
           <div className="max-w-xl w-full h-20 shadow-xl shadow-color-background">
             {trackSearch}
+          </div>
+          <div className="absolute right-0 pt-1 pb-1 pl-2 pr-2">
+            {userPanel}
           </div>
         </div>
       </div>

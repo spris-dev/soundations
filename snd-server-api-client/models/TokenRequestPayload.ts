@@ -2,7 +2,7 @@
 /* tslint:disable */
 /* eslint-disable */
 
-export type TokenRequestForm = {
+export type TokenRequestPayload = {
     username: string;
     password: string;
 };
