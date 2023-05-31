@@ -1,10 +1,11 @@
 import { FunctionalComponent } from "preact"
-import { useEffect, useState, useRef } from "preact/hooks"
+import { useState, useRef } from "preact/hooks"
 
 import { useAppContext } from "snd-client/app-context"
 import { Button } from "snd-client/components/button"
 import { Input } from "snd-client/components/input"
 import { Dialog } from "snd-client/components/dialogs"
+import { OpStatus } from "snd-client/utils"
 
 export const LoginDialog: FunctionalComponent = () => {
   const {
@@ -13,10 +14,6 @@ export const LoginDialog: FunctionalComponent = () => {
     },
     effects,
   } = useAppContext()
-
-  useEffect(() => {
-    return effects.user.subscribe()
-  }, [])
 
   const formRef = useRef<HTMLFormElement>(null)
   const [username, setUsername] = useState("")
@@ -50,19 +47,18 @@ export const LoginDialog: FunctionalComponent = () => {
           </form>
         </div>
       </Dialog.Body>
-      {authState.value.status === "ERROR" && (
+      {authState.value.status === OpStatus.ERROR && (
         <Dialog.Error>{JSON.stringify(authState.value.error)}</Dialog.Error>
       )}
       <Dialog.Footer>
         <Dialog.FooterAction>
           <Button
-            onClick={async () => {
+            onClick={() => {
               if (!formRef.current?.reportValidity()) {
                 return
               }
 
-              await effects.user.logIn({ username, password })
-              effects.dialog.close()
+              effects.user.logIn({ username, password })
             }}
           >
             Submit

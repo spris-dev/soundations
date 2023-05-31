@@ -18,7 +18,7 @@ export const createAppContext: CreateAppContext = () => {
   const ctx: AppContext = Object.create(null)
 
   const services = (ctx.services = createAppServices(ctx))
-  const state = (ctx.state = createAppState())
+  const state = (ctx.state = createAppState(ctx))
   const effects = (ctx.effects = createAppEffects(ctx))
 
   return {

@@ -4,12 +4,13 @@ import { createAppEffects } from "snd-client/effects/create-effects"
 import { OpStatus, decodeJwt } from "snd-client/utils"
 import type { TokenRequestPayload } from "snd-server-api-client"
 
-export const createUserEffects = createAppEffects((ctx) => {
+export const createUserEffects = createAppEffects((ctx, { cancelAll }) => {
   const {
     state: {
       user: { authState },
+      dialog,
     },
-    services: { soundationsApi },
+    services: { soundationsApi, authStateStorage },
   } = ctx
 
   const logOut = () => {
@@ -33,39 +34,62 @@ export const createUserEffects = createAppEffects((ctx) => {
   }
 
   const subscribe = () => {
-    return effect(async () => {
-      if (authState.value.status !== OpStatus.LOADING) {
-        return
-      }
+    return cancelAll([
+      effect(() => {
+        // When dialog is closed but auth state is either loading or error
+        // we reset it to "clean" idle state
+        if (
+          dialog.content.value === null &&
+          authState.peek().status !== OpStatus.OK
+        ) {
+          authState.value = { status: OpStatus.IDLE }
+        }
+      }),
 
-      try {
-        const authApi =
-          authState.value.action === "login"
-            ? soundationsApi.users.login
-            : soundationsApi.users.signup
+      effect(() => {
+        if (authState.value.status === OpStatus.OK) {
+          authStateStorage.set(authState.value.result)
+        } else {
+          authStateStorage.clear()
+        }
+      }),
 
-        const { access_token } = await authApi.call(soundationsApi.users, {
-          requestBody: authState.value.payload,
-        })
-
-        const { sub } = decodeJwt<{ sub: string }>(access_token)
-
-        if (!sub) {
-          throw new Error("Unexpected token format")
+      effect(async () => {
+        if (authState.value.status !== OpStatus.LOADING) {
+          return
         }
 
-        authState.value = {
-          status: OpStatus.OK,
-          result: {
-            name: sub,
-            token: access_token,
-          },
+        try {
+          const authApi =
+            authState.value.action === "login"
+              ? soundationsApi.users.login
+              : soundationsApi.users.signup
+
+          const { access_token } = await authApi.call(soundationsApi.users, {
+            requestBody: authState.value.payload,
+          })
+
+          const { sub } = decodeJwt<{ sub: string }>(access_token)
+
+          if (!sub) {
+            throw new Error("Unexpected token format")
+          }
+
+          authState.value = {
+            status: OpStatus.OK,
+            result: {
+              name: sub,
+              token: access_token,
+            },
+          }
+
+          ctx.effects.dialog.close()
+        } catch (error) {
+          console.error(error)
+          authState.value = { status: OpStatus.ERROR, error }
         }
-      } catch (error) {
-        console.error(error)
-        authState.value = { status: OpStatus.ERROR, error }
-      }
-    })
+      }),
+    ])
   }
 
   return {

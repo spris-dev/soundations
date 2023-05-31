@@ -9,7 +9,8 @@ export const decodeJwt: DecodeJwt = (value) => {
 
   try {
     return JSON.parse(atob(payload))
-  } catch {
+  } catch (error) {
+    console.error(error)
     return {}
   }
 }
