@@ -1,4 +1,5 @@
 create table if not exists search_history (
-  userid integer primary key,
-  foreign key(trackid) references users(id)
+  trackid text primary key,
+  userid integer,
+  foreign key(userid) references users(id)
 );

@@ -13,10 +13,13 @@ from context import Context
 from recommendation_engine import Recommender
 from services.thread_pool import ThreadPool
 from services.track_service import TrackService
+from services.search_history import SearchHistory
+from services.authorization_service import AuthorizationService
 from services.sqlite_storage import SqliteStorage
 from services.config import Config
 from services.spotify_api import SpotifyApi
 from services.tracer import Tracer
+from services.users_storage import UsersStorage
 from routes.health import create_health_router
 from routes.tracks import create_tracks_router
 from routes.users import create_users_router
@@ -32,7 +35,10 @@ def create_ctx() -> Context:
     ctx.recommender = Recommender(ctx)
     ctx.thread_pool = ThreadPool()
     ctx.track_service = TrackService(ctx)
+    ctx.search_history = SearchHistory(ctx)
+    ctx.authorization_service = AuthorizationService(ctx)
     ctx.tracer = Tracer()
+    ctx.users_storage = UsersStorage(ctx)
 
     return ctx
 

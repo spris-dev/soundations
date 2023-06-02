@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, HTTPException, Response
+from fastapi import APIRouter, Query, HTTPException, Response, Depends
 from result import Ok, Err
 from pydantic import BaseModel
 from asyncio import gather
@@ -6,6 +6,7 @@ from asyncio import gather
 from services.track_service import TrackServiceResult
 from context import Context
 from mappers.soundations import create_track_from_spotify
+from models.users import UserInDB
 from models.soundations import (
     SoundationsTrack,
     RecommendedTrack,
@@ -65,9 +66,13 @@ def create_tracks_router(ctx: Context):
     )
     async def get_track_recommendations(
         track_id: str,
+        user: UserInDB | None = Depends(ctx.authorization_service.get_current_user),
         limit: int = Query(default=6, ge=1, le=10),
         offset: int = Query(default=0, ge=0, le=50),
     ) -> TracksRecommendationsResponse:
+        if user:
+            await ctx.search_history.store_track(user, track_id)
+
         result = await ctx.track_service.create_track_model_by_id(track_id)
 
         match result:

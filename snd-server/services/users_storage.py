@@ -17,9 +17,11 @@ class UsersStorage:
 
         return UserInDB.parse_obj(record._mapping)
 
-    async def get_user_id(self, username: str) -> int | None:
-        query = "SELECT * FROM users WHERE username = :username"
-        record = await self.db.fetch_one(query=query, values={"username": username})
+    async def get_user_id(self, user: UserInDB) -> int | None:
+        query = "SELECT id FROM users WHERE username = :username"
+        record = await self.db.fetch_one(
+            query=query, values={"username": user.username}
+        )
         if not record:
             return None
 

@@ -27,19 +27,13 @@ def get_password_hash(password) -> str:
     return pwd_context.hash(password)
 
 
-def get_user(db, username: str) -> UserInDB | None:
-    if username in db:
-        user_dict = db[username]
-        return UserInDB(**user_dict)
-
-
 def create_users_router(ctx: Context) -> APIRouter:
     router = APIRouter()
 
     async def authenticate_user(
         username: str, password: str
     ) -> UserInDB | Literal[False]:
-        user = await ctx.sqlite_storage.get_user(username=username)
+        user = await ctx.users_storage.get_user(username=username)
         if not user:
             return False
         if not verify_password(password, user.hashed_password):
@@ -50,7 +44,7 @@ def create_users_router(ctx: Context) -> APIRouter:
         user_model = UserInDB(
             username=username, hashed_password=get_password_hash(password)
         )
-        user = await ctx.sqlite_storage.store_user(user=user_model)
+        user = await ctx.users_storage.store_user(user=user_model)
         if not user:
             return False
         return user
