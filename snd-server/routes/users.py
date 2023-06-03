@@ -41,10 +41,7 @@ def create_users_router(ctx: Context) -> APIRouter:
         return user
 
     async def store_user(username: str, password: str) -> UserInDB | Literal[False]:
-        user_model = UserInDB(
-            username=username, hashed_password=get_password_hash(password)
-        )
-        user = await ctx.users_storage.store_user(user=user_model)
+        user = await ctx.users_storage.store_user(username, get_password_hash(password))
         if not user:
             return False
         return user

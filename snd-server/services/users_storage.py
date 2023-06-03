@@ -17,21 +17,14 @@ class UsersStorage:
 
         return UserInDB.parse_obj(record._mapping)
 
-    async def get_user_id(self, user: UserInDB) -> int | None:
-        query = "SELECT id FROM users WHERE username = :username"
-        record = await self.db.fetch_one(
-            query=query, values={"username": user.username}
-        )
-        if not record:
-            return None
-
-        return record[0]
-
-    async def store_user(self, user: UserInDB) -> UserInDB | None:
+    async def store_user(self, username, hashed_password) -> UserInDB | None:
         query = "INSERT INTO users(username, hashed_password) VALUES (:username, :hashed_password)"
         try:
-            await self.db.execute(query=query, values=user.__dict__)
+            await self.db.execute(
+                query=query,
+                values={"username": username, "hashed_password": hashed_password},
+            )
         except IntegrityError:
             return None
 
-        return await self.get_user(user.username)
+        return await self.get_user(username)
