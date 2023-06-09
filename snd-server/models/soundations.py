@@ -29,6 +29,10 @@ class RecommendedTrack(BaseModel):
     similarity: float
 
 
+class PersonalRecommendedTrack(RecommendedTrack):
+    user_track_id: str
+
+
 class SoundationsTrack(SpotifyApiTrack):
     pass
 

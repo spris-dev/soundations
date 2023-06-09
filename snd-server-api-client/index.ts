@@ -20,6 +20,7 @@ export type { TokenRequestPayload } from './models/TokenRequestPayload';
 export type { TrackRecommendationsItem } from './models/TrackRecommendationsItem';
 export type { TracksRecommendationsResponse } from './models/TracksRecommendationsResponse';
 export type { TracksSearchResponse } from './models/TracksSearchResponse';
+export type { UserTrackSearchPrompt } from './models/UserTrackSearchPrompt';
 export type { ValidationError } from './models/ValidationError';
 
 export { HealthService } from './services/HealthService';

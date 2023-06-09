@@ -1,4 +1,5 @@
 import asyncio
+import random
 
 from result import Ok, Err, Result
 from typing import TypeVar, List
@@ -22,6 +23,14 @@ def crawl_tracks_by_genres(ctx: Context, resume: bool, genres) -> None:
     spotify_crawler = SpotifyCrawler(ctx, resume)
 
     spotify_crawler.fetch_tracks_by_genres(genres)
+
+
+async def get_tracks_by_genre(
+    ctx: Context, genre: str, limit: int = 1, offset: int = 0
+) -> List[SoundationsTrackWithFeatures]:
+    spotify_crawler = SpotifyCrawler(ctx, resume=False)
+
+    return await spotify_crawler.find_tracks_by_genre(genre, limit, offset)
 
 
 class SpotifyCrawler:
@@ -145,6 +154,83 @@ class SpotifyCrawler:
 
                 case Err():
                     continue
+
+    async def __fetch_random_artists_by_genre(
+        self, genre, limit: int = 1
+    ) -> list[SpotifyApiArtist]:
+        artists_search_result = await self.ctx.spotify_api.search_artists_by_genre(
+            genre,
+            limit,
+            random.randint(
+                0, self.ctx.config.artists_by_genre_max_spotify_offset - limit
+            ),
+        )
+
+        spotify_artists = []
+        match artists_search_result:
+            case Ok(result):
+                spotify_artists.extend(result.artists.items)
+
+            case Err(err):
+                return Err(
+                    SoundationsError(
+                        404, f"Failed to fetch artists from Spotify: {str(err)}"
+                    )
+                )
+
+        return spotify_artists
+
+    async def find_tracks_by_genre(
+        self, genre: str, limit: int = 1, offset: int = 0
+    ) -> List[SoundationsTrackWithFeatures]:
+        spotify_artists = await self.__fetch_random_artists_by_genre(
+            genre, self.ctx.config.artists_by_genre_limit
+        )
+
+        tracks = []
+        for artist in spotify_artists:
+            tracks_search_result = await self.ctx.spotify_api.search_tracks_by_artist(
+                artist=artist,
+                limit=self.ctx.config.tracks_by_artist_limit,
+                offset=offset,
+            )
+            match tracks_search_result:
+                case Ok(result):
+                    for track in result.items:
+                        features_result = await self.__fetch_track_features(track.id)
+                        match features_result:
+                            case Ok(features):
+                                track_with_features = SoundationsTrackWithFeatures(
+                                    id=track.id,
+                                    popularity=track.popularity,
+                                    artists=track.artists,
+                                    danceability=features.danceability,
+                                    energy=features.energy,
+                                    key=features.key,
+                                    loudness=features.loudness,
+                                    mode=features.mode,
+                                    speechiness=features.speechiness,
+                                    acousticness=features.acousticness,
+                                    instrumentalness=features.instrumentalness,
+                                    liveness=features.liveness,
+                                    valence=features.valence,
+                                    tempo=features.tempo,
+                                    duration_ms=features.duration_ms,
+                                    time_signature=features.time_signature,
+                                )
+
+                                tracks.append(track_with_features)
+
+                            case Err():
+                                continue
+
+                case Err(err):
+                    return Err(
+                        SoundationsError(
+                            404, f"Failed to fetch tracks from Spotify: {str(err)}"
+                        )
+                    )
+        return tracks
 
     def fetch_tracks_by_genres(self, genres) -> None:
         if self.resume:

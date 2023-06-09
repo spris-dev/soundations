@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, HTTPException, Response, Depends
+from fastapi import APIRouter, Query, HTTPException, Response, Depends, status
 from result import Ok, Err
 from pydantic import BaseModel
 from asyncio import gather
@@ -6,7 +6,7 @@ from asyncio import gather
 from services.track_service import TrackServiceResult
 from context import Context
 from mappers.soundations import create_track_from_spotify
-from models.users import UserInDB
+from models.users import UserInDB, UserTrackSearchPrompt
 from models.soundations import (
     SoundationsTrack,
     RecommendedTrack,
@@ -102,5 +102,45 @@ def create_tracks_router(ctx: Context):
                 )
             case Err(err):
                 raise HTTPException(status_code=err.http_code, detail=err.message)
+
+    @router.post(
+        "/tracks/personal_recommendations",
+        response_model=TracksRecommendationsResponse,
+        tags=["tracks"],
+    )
+    async def get_personal_recommendations(
+        track_description: UserTrackSearchPrompt,
+        user: UserInDB | None = Depends(ctx.authorization_service.get_current_user),
+        limit: int = Query(default=6, ge=1, le=10),
+        offset: int = Query(default=0, ge=0, le=50),
+    ) -> TracksRecommendationsResponse:
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Incorrect username or password",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        recommendations = await ctx.recommender.get_top_n_for_user(
+            track_description.prompt, user, limit
+        )
+
+        soundations_tracks: list[TrackServiceResult[SoundationsTrack]] = await gather(
+            *[
+                ctx.track_service.soundations_track_by_id(track.id)
+                for track in recommendations
+            ]
+        )
+
+        return TracksRecommendationsResponse(
+            items=[
+                TrackRecommendationsItem(track=t.unwrap(), recommendation=r)
+                for t, r in zip(soundations_tracks, recommendations)
+                if t.is_ok()
+            ],
+            limit=limit,
+            offset=offset,
+            total=len(recommendations),
+        )
 
     return router

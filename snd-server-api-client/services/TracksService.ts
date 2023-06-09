@@ -3,6 +3,7 @@
 /* eslint-disable */
 import type { TracksRecommendationsResponse } from '../models/TracksRecommendationsResponse';
 import type { TracksSearchResponse } from '../models/TracksSearchResponse';
+import type { UserTrackSearchPrompt } from '../models/UserTrackSearchPrompt';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -63,6 +64,35 @@ export class TracksService {
                 'limit': limit,
                 'offset': offset,
             },
+            errors: {
+                422: `Validation Error`,
+            },
+        });
+    }
+
+    /**
+     * Get Personal Recommendations
+     * @returns TracksRecommendationsResponse Successful Response
+     * @throws ApiError
+     */
+    public getPersonalRecommendations({
+        requestBody,
+        limit = 6,
+        offset,
+    }: {
+        requestBody: UserTrackSearchPrompt,
+        limit?: number,
+        offset?: number,
+    }): CancelablePromise<TracksRecommendationsResponse> {
+        return this.httpRequest.request({
+            method: 'POST',
+            url: '/api/tracks/personal_recommendations',
+            query: {
+                'limit': limit,
+                'offset': offset,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },
