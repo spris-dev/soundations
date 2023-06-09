@@ -4,6 +4,7 @@ import random
 from result import Ok, Err, Result
 from typing import TypeVar, List
 
+from fastapi import HTTPException
 from context import Context
 from services.sounds_storage import SoundsStorage
 from models.error import SoundationsError
@@ -157,7 +158,7 @@ class SpotifyCrawler:
 
     async def __fetch_random_artists_by_genre(
         self, genre, limit: int = 1
-    ) -> list[SpotifyApiArtist]:
+    ) -> Result[list[SpotifyApiArtist], SoundationsError]:
         artists_search_result = await self.ctx.spotify_api.search_artists_by_genre(
             genre,
             limit,
@@ -178,7 +179,7 @@ class SpotifyCrawler:
                     )
                 )
 
-        return spotify_artists
+        return Ok(spotify_artists)
 
     async def find_tracks_by_genre(
         self, genre: str, limit: int = 1, offset: int = 0
@@ -188,48 +189,52 @@ class SpotifyCrawler:
         )
 
         tracks = []
-        for artist in spotify_artists:
-            tracks_search_result = await self.ctx.spotify_api.search_tracks_by_artist(
-                artist=artist,
-                limit=self.ctx.config.tracks_by_artist_limit,
-                offset=offset,
-            )
-            match tracks_search_result:
-                case Ok(result):
-                    for track in result.items:
-                        features_result = await self.__fetch_track_features(track.id)
-                        match features_result:
-                            case Ok(features):
-                                track_with_features = SoundationsTrackWithFeatures(
-                                    id=track.id,
-                                    popularity=track.popularity,
-                                    artists=track.artists,
-                                    danceability=features.danceability,
-                                    energy=features.energy,
-                                    key=features.key,
-                                    loudness=features.loudness,
-                                    mode=features.mode,
-                                    speechiness=features.speechiness,
-                                    acousticness=features.acousticness,
-                                    instrumentalness=features.instrumentalness,
-                                    liveness=features.liveness,
-                                    valence=features.valence,
-                                    tempo=features.tempo,
-                                    duration_ms=features.duration_ms,
-                                    time_signature=features.time_signature,
-                                )
-
-                                tracks.append(track_with_features)
-
-                            case Err():
-                                continue
-
-                case Err(err):
-                    return Err(
-                        SoundationsError(
-                            404, f"Failed to fetch tracks from Spotify: {str(err)}"
+        match spotify_artists:
+            case Ok(artists):
+                for artist in artists:
+                    tracks_search_result = (
+                        await self.ctx.spotify_api.search_tracks_by_artist(
+                            artist=artist,
+                            limit=self.ctx.config.tracks_by_artist_limit,
+                            offset=offset,
                         )
                     )
+                    match tracks_search_result:
+                        case Ok(result):
+                            for track in result.items:
+                                features_result = await self.__fetch_track_features(
+                                    track.id
+                                )
+                                match features_result:
+                                    case Ok(features):
+                                        track_with_features = SoundationsTrackWithFeatures(
+                                            id=track.id,
+                                            popularity=track.popularity,
+                                            artists=track.artists,
+                                            danceability=features.danceability,
+                                            energy=features.energy,
+                                            key=features.key,
+                                            loudness=features.loudness,
+                                            mode=features.mode,
+                                            speechiness=features.speechiness,
+                                            acousticness=features.acousticness,
+                                            instrumentalness=features.instrumentalness,
+                                            liveness=features.liveness,
+                                            valence=features.valence,
+                                            tempo=features.tempo,
+                                            duration_ms=features.duration_ms,
+                                            time_signature=features.time_signature,
+                                        )
+
+                                        tracks.append(track_with_features)
+
+                                    case Err():
+                                        continue
+
+                        case Err(err):
+                            continue
+            case Err(err):
+                raise HTTPException(status_code=err.http_code, detail=err.message)
         return tracks
 
     def fetch_tracks_by_genres(self, genres) -> None:

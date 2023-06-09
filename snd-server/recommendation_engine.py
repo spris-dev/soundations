@@ -2,6 +2,8 @@ import joblib
 import zipfile
 import pandas as pd
 
+from fastapi import HTTPException, status
+from result import Ok, Err
 from typing import List
 from sklearn.metrics.pairwise import cosine_similarity
 
@@ -73,10 +75,14 @@ class Recommender:
 
     async def get_top_n_for_user(
         self, track_description_prompt: str, user: UserInDB, n: int
-    ) -> List[RecommendedTrack] | None:
+    ) -> List[RecommendedTrack]:
         user_history = await self.ctx.search_history.get_search_history(user=user)
         if not user_history:
-            return None
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User track search history not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
         tracks = []
         tracks_df = pd.DataFrame(columns=self.columns)
@@ -95,11 +101,15 @@ class Recommender:
 
         user_recommends = []
         for user_track_id in user_history:
-            user_track = await self.ctx.track_service.create_track_model_by_id(
+            user_track_result = await self.ctx.track_service.create_track_model_by_id(
                 user_track_id
             )
-            recommends = self.__recommend(tracks_df, user_track.value, n)
-            user_recommends.extend(recommends)
+            match user_track_result:
+                case Ok(user_track):
+                    recommends = self.__recommend(tracks_df, user_track, n)
+                    user_recommends.extend(recommends)
+                case Err(err):
+                    raise HTTPException(status_code=err.http_code, detail=err.message)
 
         return sorted(
             user_recommends, key=lambda track: track.similarity, reverse=True
