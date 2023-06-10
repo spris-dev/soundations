@@ -74,6 +74,8 @@ def create_app(ctx: Context) -> FastAPI:
         await ctx.sqlite_storage.connect()
         await ctx.sqlite_storage.migrate()
 
+        await ctx.genres_classificator.load_model()
+
     @app.on_event("shutdown")
     async def shutdown():
         await ctx.sqlite_storage.disconnect()

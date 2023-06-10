@@ -12,13 +12,12 @@ class GenresClassificator:
 
     async def load_model(self):
         self.model = AutoModelForSequenceClassification.from_pretrained(
-            "./bert_fine_tuned_genres"
+            self.config.archive_bert_model_path
         )
-        with open("./bert_fine_tuned_genres/config.json", "r") as file:
+        with open(f"{self.config.archive_bert_model_path}/config.json", "r") as file:
             self.ids_to_labels = json.load(file)["id2label"]
 
     async def predict(self, prompt_text: str):
-        await self.load_model()
         encoding = self.tokenizer(prompt_text, return_tensors="pt")
         outputs = self.model(**encoding)
 

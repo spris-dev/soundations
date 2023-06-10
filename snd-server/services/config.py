@@ -10,6 +10,7 @@ class Config:
     spotify_client_id: str = os.environ["SND_SPOTIFY_CLIENT_ID"]
     spotify_client_secret: str = os.environ["SND_SPOTIFY_CLIENT_SECRET"]
     archive_storage_path: str = os.environ["SND_RECOMMENDER_ARCHIVE_PATH"]
+    archive_bert_model_path: str = os.environ["SND_BERT_MODEL_ARCHIVE_PATH"]
 
     snd_secret_key: str = os.environ["SND_SECRET_KEY"]
     snd_enc_algorithm: str = os.environ["SND_ENC_ALGORITHM"]
