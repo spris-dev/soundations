@@ -10,6 +10,7 @@ class Config:
     spotify_client_id: str = os.environ["SND_SPOTIFY_CLIENT_ID"]
     spotify_client_secret: str = os.environ["SND_SPOTIFY_CLIENT_SECRET"]
     archive_storage_path: str = os.environ["SND_RECOMMENDER_ARCHIVE_PATH"]
+    archive_bert_model_path: str = os.environ["SND_BERT_MODEL_ARCHIVE_PATH"]
 
     snd_secret_key: str = os.environ["SND_SECRET_KEY"]
     snd_enc_algorithm: str = os.environ["SND_ENC_ALGORITHM"]
@@ -22,3 +23,8 @@ class Config:
 
     items_per_search = 1000
     spotify_limit = 50
+
+    genres_classification_threshold = 0.3
+    artists_by_genre_max_spotify_offset = 99
+    artists_by_genre_limit = 25
+    tracks_by_artist_limit = 4

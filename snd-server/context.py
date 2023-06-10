@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from services.authorization_service import AuthorizationService
     from services.tracer import Tracer
     from recommendation_engine import Recommender
+    from genres_classificator import GenresClassificator
 
 
 class Context:
@@ -26,3 +27,4 @@ class Context:
     tracer: "Tracer"
     users_storage: "UsersStorage"
     search_history: "SearchHistory"
+    genres_classificator: "GenresClassificator"

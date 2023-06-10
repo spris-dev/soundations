@@ -11,6 +11,7 @@ from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from context import Context
 from recommendation_engine import Recommender
+from genres_classificator import GenresClassificator
 from services.thread_pool import ThreadPool
 from services.track_service import TrackService
 from services.search_history import SearchHistory
@@ -39,6 +40,7 @@ def create_ctx() -> Context:
     ctx.authorization_service = AuthorizationService(ctx)
     ctx.tracer = Tracer()
     ctx.users_storage = UsersStorage(ctx)
+    ctx.genres_classificator = GenresClassificator(ctx)
 
     return ctx
 
@@ -71,6 +73,8 @@ def create_app(ctx: Context) -> FastAPI:
 
         await ctx.sqlite_storage.connect()
         await ctx.sqlite_storage.migrate()
+
+        await ctx.genres_classificator.load_model()
 
     @app.on_event("shutdown")
     async def shutdown():
