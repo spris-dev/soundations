@@ -1,3 +1,4 @@
+import { flow } from "lodash-es"
 import { FunctionalComponent } from "preact"
 import { useEffect, useCallback } from "preact/hooks"
 import { useSignal } from "@preact/signals"
@@ -16,7 +17,7 @@ import { TrackPlayerIcon } from "snd-client/components/track-player"
 export const TrackRecommendations: FunctionalComponent = () => {
   const {
     state: {
-      selectedTrack: { value: track },
+      selectedTrack,
       recommendations: {
         recommendationsState: { value },
       },
@@ -25,16 +26,19 @@ export const TrackRecommendations: FunctionalComponent = () => {
   } = useAppContext()
 
   useEffect(() => {
-    return effects.trackRecommendations.subscribe()
+    return flow([
+      effects.trackRecommendations.subscribe,
+      effects.personalRecommendations.subscribe,
+    ])()
   }, [])
 
   return (
     <div className="w-full h-full relative">
-      {track && (
+      {selectedTrack.value && (
         <div className="text-lg mb-2">
           Recommendations for{" "}
           <span className="font-bold">
-            {track.artists[0]?.name} - {track.name}
+            {selectedTrack.value.artists[0]?.name} - {selectedTrack.value.name}
           </span>
           :
         </div>

@@ -1,6 +1,8 @@
 import asyncio
 import random
+import logging
 
+from asyncio import gather
 from result import Ok, Err, Result
 from typing import TypeVar, List
 
@@ -18,6 +20,9 @@ from models.soundations import SoundationsTrackWithFeatures
 
 
 T = TypeVar("T")
+
+
+logger = logging.getLogger(__name__)
 
 
 def crawl_tracks_by_genres(ctx: Context, resume: bool, genres) -> None:
@@ -160,11 +165,7 @@ class SpotifyCrawler:
         self, genre, limit: int = 1
     ) -> Result[list[SpotifyApiArtist], SoundationsError]:
         artists_search_result = await self.ctx.spotify_api.search_artists_by_genre(
-            genre,
-            limit,
-            random.randint(
-                0, self.ctx.config.artists_by_genre_max_spotify_offset - limit
-            ),
+            genre, limit, 0
         )
 
         spotify_artists = []
@@ -189,9 +190,14 @@ class SpotifyCrawler:
         )
 
         tracks = []
+
         match spotify_artists:
             case Ok(artists):
-                for artist in artists:
+                logger.info(
+                    f"[SpotifyCrawler | find_tracks_by_genre] Fetched artists: {spotify_artists}"
+                )
+
+                async def __fetch_tracks_for_artist(artist: SpotifyApiArtist):
                     tracks_search_result = (
                         await self.ctx.spotify_api.search_tracks_by_artist(
                             artist=artist,
@@ -199,8 +205,13 @@ class SpotifyCrawler:
                             offset=offset,
                         )
                     )
+
                     match tracks_search_result:
                         case Ok(result):
+                            logger.info(
+                                f"[SpotifyCrawler | find_tracks_by_genre] Fetched {len(result.items)} tracks for {artist}"
+                            )
+
                             for track in result.items:
                                 features_result = await self.__fetch_track_features(
                                     track.id
@@ -230,11 +241,23 @@ class SpotifyCrawler:
 
                                     case Err():
                                         continue
-
                         case Err(err):
-                            continue
+                            pass
+
+                sampled_artists = random.sample(
+                    artists, self.ctx.config.artists_by_genre_sample_size
+                )
+                logger.info(
+                    f"[SpotifyCrawler | find_tracks_by_genre] Sampled artists: {sampled_artists}"
+                )
+
+                await gather(
+                    *[__fetch_tracks_for_artist(artist) for artist in sampled_artists]
+                )
+
             case Err(err):
                 raise HTTPException(status_code=err.http_code, detail=err.message)
+
         return tracks
 
     def fetch_tracks_by_genres(self, genres) -> None:

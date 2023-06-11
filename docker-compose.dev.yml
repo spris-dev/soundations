@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  snd-server:
+    build:
+      context: ./
+      dockerfile: ./snd-server/Dockerfile.prod
+    entrypoint: [ "./bin/start-server.sh" ]
+    volumes:
+        - ./:/soundations

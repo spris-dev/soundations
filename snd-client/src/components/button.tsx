@@ -22,7 +22,7 @@ export const Button: FunctionComponent<ButtonProps> = ({
 }) => {
   return (
     <button
-      className={`h-full p-2 focus:outline focus:outline-2 ${variantToClassNameMap[variant]}`}
+      className={`h-full p-2 focus:outline focus:outline-2 ${variantToClassNameMap[variant]} flex items-center`}
       onClick={onClick}
     >
       {children}

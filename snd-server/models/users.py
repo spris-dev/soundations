@@ -17,7 +17,3 @@ class User(BaseModel):
 class UserInDB(User):
     id: int
     hashed_password: str
-
-
-class UserTrackSearchPrompt(BaseModel):
-    prompt: str = Field(max_length=100)

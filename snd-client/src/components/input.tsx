@@ -7,6 +7,7 @@ type InputProps = Omit<
   "value" | "onChange" | "icon" | "placeholder"
 > & {
   icon?: VNode
+  rightNode?: VNode
   value?: string | Signal<string>
   placeholder?: string | Signal<string>
   onChange?: (value: string) => void
@@ -14,6 +15,7 @@ type InputProps = Omit<
 
 export const Input: FunctionalComponent<InputProps> = ({
   icon,
+  rightNode,
   value,
   onChange,
   placeholder,
@@ -44,6 +46,11 @@ export const Input: FunctionalComponent<InputProps> = ({
         placeholder={placeholder}
         className="shrink w-full h-full block placeholder:italic focus:outline-none rounded-md bg-color-background"
       />
+      {rightNode && (
+        <div className="shrink-0 h-full flex items-center ml-2 mr-2">
+          {rightNode}
+        </div>
+      )}
     </div>
   )
 }

@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_BACKOFF_SECS = 2
+MAX_RETRY_ATTEMPS = 3
 SPOTIFY_TOKEN_URL = "https://accounts.spotify.com/api/token"
 SPOTIFY_API_URL = "https://api.spotify.com/v1"
 
@@ -120,7 +121,10 @@ class SpotifyApiImpl:
                 await self.refresh_access_token()
                 return await self.__call_spotify_api(call, model)
 
-            if response.status_code in [429, 503]:
+            if (
+                response.status_code in [404, 429, 503]
+                and retry_attempt <= MAX_RETRY_ATTEMPS
+            ):
                 backoff_secs = response.headers.get(
                     "retry-after", DEFAULT_BACKOFF_SECS * retry_attempt
                 )
@@ -155,6 +159,8 @@ class SpotifyApiImpl:
     ) -> SpotifyResult[SpotifyApiTrackSearchResponseTracks]:
         url = f"{SPOTIFY_API_URL}/search?type=track&q={q}&limit={limit}&offset={offset}"
 
+        logger.info(f"[Spotify API | search_tracks] {url}")
+
         result = await self.__call_spotify_api(
             lambda headers: self.ctx.http_client.get(
                 url=url,
@@ -167,6 +173,8 @@ class SpotifyApiImpl:
 
     async def get_track(self, track_id: str) -> SpotifyResult[SpotifyApiTrack]:
         url = f"{SPOTIFY_API_URL}/tracks/{track_id}"
+
+        logger.info(f"[Spotify API | get_track] {url}")
 
         result = await self.__call_spotify_api(
             lambda headers: self.ctx.http_client.get(
@@ -183,6 +191,8 @@ class SpotifyApiImpl:
     ) -> SpotifyResult[SpotifyApiTrackFeaturesResponse]:
         url = f"{SPOTIFY_API_URL}/audio-features/{track_id}"
 
+        logger.info(f"[Spotify API | get_track_features] {url}")
+
         result = await self.__call_spotify_api(
             lambda headers: self.ctx.http_client.get(
                 url=url,
@@ -198,6 +208,8 @@ class SpotifyApiImpl:
     ) -> SpotifyResult[SpotifyApiArtistSearchResponse]:
         url = f"{SPOTIFY_API_URL}/search?q=genre%3A{genre}&type=artist&limit={limit}&offset={offset}"
 
+        logger.info(f"[Spotify API | search_artists_by_genre] {url}")
+
         result = await self.__call_spotify_api(
             lambda headers: self.ctx.http_client.get(
                 url=url,
@@ -211,7 +223,9 @@ class SpotifyApiImpl:
     async def search_tracks_by_artist(
         self, artist: SpotifyApiArtist, limit: int = 1, offset: int = 0
     ) -> SpotifyResult[SpotifyApiTrackSearchResponseTracks]:
-        url = f"{SPOTIFY_API_URL}/search?q=artist='{artist.name}'&type=track&limit={limit}&offset={offset}"
+        url = f"{SPOTIFY_API_URL}/search?q=artist%3A'{artist.name}'&type=track&limit={limit}&offset={offset}"
+
+        logger.info(f"[Spotify API | search_tracks_by_artist] {url}")
 
         result = await self.__call_spotify_api(
             lambda headers: self.ctx.http_client.get(
