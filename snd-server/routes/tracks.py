@@ -6,7 +6,7 @@ from asyncio import gather
 from services.track_service import TrackServiceResult
 from context import Context
 from mappers.soundations import create_track_from_spotify
-from models.users import UserInDB, UserTrackSearchPrompt
+from models.users import UserInDB
 from models.soundations import (
     SoundationsTrack,
     RecommendedTrack,
@@ -103,13 +103,13 @@ def create_tracks_router(ctx: Context):
             case Err(err):
                 raise HTTPException(status_code=err.http_code, detail=err.message)
 
-    @router.post(
+    @router.get(
         "/tracks/personal_recommendations",
         response_model=TracksRecommendationsResponse,
         tags=["tracks"],
     )
     async def get_personal_recommendations(
-        track_description: UserTrackSearchPrompt,
+        prompt: str = Query(min_length=1, max_length=128),
         user: UserInDB | None = Depends(ctx.authorization_service.get_current_user),
         limit: int = Query(default=6, ge=1, le=10),
         offset: int = Query(default=0, ge=0, le=50),
@@ -121,9 +121,7 @@ def create_tracks_router(ctx: Context):
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        recommendations = await ctx.recommender.get_top_n_for_user(
-            track_description.prompt, user, limit
-        )
+        recommendations = await ctx.recommender.get_top_n_for_user(prompt, user, limit)
 
         soundations_tracks: list[TrackServiceResult[SoundationsTrack]] = await gather(
             *[

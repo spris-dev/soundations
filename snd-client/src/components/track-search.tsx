@@ -7,6 +7,7 @@ import { SoundationsTrack } from "snd-server-api-client"
 import { useAppContext } from "snd-client/app-context"
 import { IconSearch } from "snd-client/components/icons"
 import { Input } from "snd-client/components/input"
+import { Button } from "snd-client/components/button"
 import { OpStatus, match } from "snd-client/utils"
 
 type TrackSearchProps = Record<never, never>
@@ -87,10 +88,35 @@ export const TrackSearchInput: FunctionalComponent = () => {
   return (
     <Input
       icon={<IconSearch />}
+      rightNode={<TrackSearchModeToggle />}
       value={searchTerm}
       onChange={effects.trackSearch.setSearchTerm}
       placeholder={placeholder}
     />
+  )
+}
+
+export const TrackSearchModeToggle: FunctionalComponent = () => {
+  const {
+    state: {
+      trackSearch: { searchMode },
+    },
+    effects,
+  } = useAppContext()
+
+  return (
+    <div className="h-11 flex items-center">
+      <Button
+        variant="secondary"
+        onClick={() =>
+          effects.trackSearch.setSearchMode(
+            searchMode.value === "track" ? "prompt" : "track"
+          )
+        }
+      >
+        {searchMode.value === "track" ? "Track Mode" : "Prompt Mode"}
+      </Button>
+    </div>
   )
 }
 

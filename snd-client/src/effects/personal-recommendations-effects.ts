@@ -1,33 +1,25 @@
-import { batch, effect } from "@preact/signals"
-
-import { SoundationsTrack } from "snd-server-api-client"
+import { debounce } from "lodash-es"
+import { effect } from "@preact/signals"
 
 import { createAppEffects } from "snd-client/effects/create-effects"
 import { OpStatus } from "snd-client/utils"
 
-export const createTrackRecommendationsEffects = createAppEffects(
+const PROMPT_DEBOUNCE_MS = 1000
+
+export const createPersonalRecommendationsEffects = createAppEffects(
   (ctx, { cancelAll }) => {
     const {
       state: {
-        selectedTrack,
-        trackSearch: { searchState },
+        trackSearch: { searchTerm, searchMode },
         recommendations: { recommendationsState },
       },
       services: { soundationsApi },
     } = ctx
 
-    const setSelectedTrack = (track: SoundationsTrack) => {
-      batch(() => {
-        selectedTrack.value = track
-        searchState.value = { status: OpStatus.IDLE }
-      })
-    }
-
     const subscribe = () => {
-      return cancelAll([
-        effect(async () => {
-          if (selectedTrack.value === null) {
-            recommendationsState.value = { status: OpStatus.IDLE }
+      const handleSearchTermChange = debounce(
+        async (searchTermValue: string) => {
+          if (searchTermValue === "" || searchMode.value !== "prompt") {
             return
           }
 
@@ -38,8 +30,8 @@ export const createTrackRecommendationsEffects = createAppEffects(
 
           try {
             const response =
-              await soundationsApi.tracks.getTrackRecommendations({
-                trackId: selectedTrack.value.id,
+              await soundationsApi.tracks.getPersonalRecommendations({
+                prompt: searchTermValue,
                 limit: 7,
               })
 
@@ -50,13 +42,15 @@ export const createTrackRecommendationsEffects = createAppEffects(
           } catch (error) {
             recommendationsState.value = { status: OpStatus.ERROR, error }
           }
-        }),
-      ])
+        },
+        PROMPT_DEBOUNCE_MS
+      )
+
+      return cancelAll([effect(() => handleSearchTermChange(searchTerm.value))])
     }
 
     return {
       subscribe,
-      setSelectedTrack,
     }
   }
 )

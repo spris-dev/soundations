@@ -27,4 +27,5 @@ class Config:
     genres_classification_threshold = 0.3
     artists_by_genre_max_spotify_offset = 99
     artists_by_genre_limit = 25
+    artists_by_genre_sample_size = 5
     tracks_by_artist_limit = 4

@@ -13,6 +13,7 @@ export type AppState = {
   trackSearch: {
     searchTerm: Signal<string>
     searchState: Signal<TrackSearchState>
+    searchMode: Signal<"track" | "prompt">
   }
   selectedTrack: Signal<SoundationsTrack | null>
   recommendations: {
@@ -71,6 +72,7 @@ export const createAppState: CreateAppState = (ctx) => {
     trackSearch: {
       searchTerm: signal(""),
       searchState: signal({ status: OpStatus.IDLE }),
+      searchMode: signal("track"),
     },
     selectedTrack: signal(null),
     recommendations: {

@@ -1,6 +1,7 @@
 # Project
 .env
 data.sqlite
+bert_fine_tuned_genres
 
 # Python
 __pycache__

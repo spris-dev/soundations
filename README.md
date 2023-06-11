@@ -27,6 +27,14 @@ cp .env.sample .env
 ./bin/start-server.sh
 ```
 
+or inside docker:
+
+```sh
+rm -rf .venv
+docker compose -f docker-compose.yml -f docker-compose.dev.yml build snd-server
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up snd-server
+```
+
 ### Start client in development mode
 
 ```sh

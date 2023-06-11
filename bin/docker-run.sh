@@ -8,7 +8,7 @@ cd "$(dirname "$0")"/..
 
 docker run \
   --rm \
-  -v $(pwd):/soundations \
+  --mount "type=bind,src=$(pwd),dst=/soundations" \
   -w /soundations \
   snd-builder \
   "$@"

@@ -3,7 +3,6 @@
 /* eslint-disable */
 import type { TracksRecommendationsResponse } from '../models/TracksRecommendationsResponse';
 import type { TracksSearchResponse } from '../models/TracksSearchResponse';
-import type { UserTrackSearchPrompt } from '../models/UserTrackSearchPrompt';
 
 import type { CancelablePromise } from '../core/CancelablePromise';
 import type { BaseHttpRequest } from '../core/BaseHttpRequest';
@@ -76,23 +75,22 @@ export class TracksService {
      * @throws ApiError
      */
     public getPersonalRecommendations({
-        requestBody,
+        prompt,
         limit = 6,
         offset,
     }: {
-        requestBody: UserTrackSearchPrompt,
+        prompt: string,
         limit?: number,
         offset?: number,
     }): CancelablePromise<TracksRecommendationsResponse> {
         return this.httpRequest.request({
-            method: 'POST',
+            method: 'GET',
             url: '/api/tracks/personal_recommendations',
             query: {
+                'prompt': prompt,
                 'limit': limit,
                 'offset': offset,
             },
-            body: requestBody,
-            mediaType: 'application/json',
             errors: {
                 422: `Validation Error`,
             },
