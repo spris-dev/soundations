@@ -2,6 +2,8 @@
 
 Sound recommendations project.
 
+![Preview](./preview.png)
+
 ## Development
 
 ### Requirements
